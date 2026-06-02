@@ -1,55 +1,38 @@
-export async function preloadImages(images, onProgress) {
+// utils/preloadAssets.js
+export function preloadImages(urls, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (!urls || urls.length === 0) {
+      resolve();
+      return;
+    }
 
-  if (!images || images.length === 0) {
+    let loadedCount = 0;
+    const totalCount = urls.length;
 
-    onProgress(100);
-
-    return;
-
-  }
-
-  let loaded = 0;
-
-  const total = images.length;
-
-  const promises = images.map((src) => {
-
-    return new Promise((resolve) => {
-
+    urls.forEach((url) => {
       const img = new Image();
-
+      img.src = url;
+      
       img.onload = () => {
-
-        loaded++;
-
-        onProgress(
-          Math.round((loaded / total) * 100)
-        );
-
-        resolve();
-
+        loadedCount++;
+        if (onProgress) {
+          onProgress((loadedCount / totalCount) * 100);
+        }
+        if (loadedCount === totalCount) {
+          resolve();
+        }
       };
 
       img.onerror = () => {
-
-        loaded++;
-
-        onProgress(
-          Math.round((loaded / total) * 100)
-        );
-
-        resolve();
-
+        // Count broken frames anyway so loading indicator never freezes up
+        loadedCount++;
+        if (onProgress) {
+          onProgress((loadedCount / totalCount) * 100);
+        }
+        if (loadedCount === totalCount) {
+          resolve();
+        }
       };
-
-      img.src = src;
-
     });
-
   });
-
-  await Promise.all(promises);
-
-  onProgress(100);
-
 }

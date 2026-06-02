@@ -21,31 +21,34 @@ export default function HeroSection() {
   const [showWebsite, setShowWebsite] = useState(false);
   const [, startTransition] = useTransition();
 
-  // Handle asset preloading workflow
   useEffect(() => {
     const startupAssets = [];
-    for (let i = 22; i <= 30; i++) {
+    const totalFrames = 72;
+
+    // Push ALL 72 frames into the preloader array so everything is cached locally instantly
+    for (let i = 0; i < totalFrames; i++) {
       startupAssets.push(
-        `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`
+        `/sequence/HighresScreenshot${String(i + 22).padStart(5, "0")}_result.webp`
       );
     }
 
-    preloadImages(startupAssets, setProgress)
+    preloadImages(startupAssets, (currentProgress) => {
+      // Safely map and bound progress state updates
+      setProgress(Math.floor(currentProgress));
+    })
       .then(() => {
         setProgress(100);
         setTimeout(() => {
           setIsLoading(false);
-        }, 300);
+        }, 400); // Smooth exit delay for the loading panel
       })
       .catch((err) => {
-        console.error("Asset preloading encountered an error:", err);
-        // Fallback safety barrier to clear loading screens
-        setIsLoading(false);
+        console.error("Asset preloading failed:", err);
+        setIsLoading(false); // Safety fallback so app doesn't hang
       });
   }, []);
 
   const handleMenuChange = (newMenu) => {
-    // Wrap state update inside a concurrent transition layer to protect frame rates
     startTransition(() => {
       setActiveMenu(newMenu);
     });
@@ -65,8 +68,6 @@ export default function HeroSection() {
     <main className="relative w-full h-screen overflow-hidden bg-[#0b1719] select-none">
       <Logo />
 
-      {/* Viewport Render Layer Array */}
-
       {/* Home (Sequence Viewer) */}
       {activeMenu === "Home" && (
         <div className="absolute inset-0 animate-fade-in">
@@ -81,7 +82,7 @@ export default function HeroSection() {
         </div>
       )}
 
-      {/* 360 Panoramic Panorama Stage (Heavy Canvas/WebGL Context) */}
+      {/* 360 Panoramic Panorama Stage */}
       {activeMenu === "Tour360" && (
         <div className="absolute inset-0 animate-fade-in">
           <Tour360Viewer />
@@ -109,7 +110,7 @@ export default function HeroSection() {
         </div>
       )}
 
-      {/* Master Shell Shell Navigation Controller */}
+      {/* Navigation Controller */}
       <SideMenu
         activeMenu={activeMenu}
         setActiveMenu={handleMenuChange}
