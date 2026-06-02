@@ -12,7 +12,6 @@ const locations = [
 const offsets = { maingate: 94, clubhouse: 168, lakeview: 22 };
 const totalFrames = 36;
 
-// Approximate time label: frame 1 = 6:00 AM, frame 36 = 8:30 PM
 function frameToTime(frame) {
   const totalMinutes = ((frame - 1) / (totalFrames - 1)) * 14.5 * 60; // 6:00 AM to 8:30 PM = 14.5 hrs
   const hours = Math.floor(6 + totalMinutes / 60);
@@ -25,95 +24,126 @@ function frameToTime(frame) {
 export default function DayNightViewer() {
   const [currentLocation, setCurrentLocation] = useState("maingate");
   const [currentFrame, setCurrentFrame] = useState(1);
+  const canvasRef = useRef(null);
   const imageCache = useRef(dayNightCache);
+  const activePreloadLocationRef = useRef(null);
+
   const sliderPercent = ((currentFrame - 1) / (totalFrames - 1)) * 100;
 
-  const getImagePath = () => {
-    const n = currentFrame + offsets[currentLocation];
-    
-    return `/daynight/${currentLocation}/HighresScreenshot00${String(n).padStart(3, "0")}_result.webp`;
-
-    
+  const getImagePath = (loc, frame) => {
+    const n = frame + offsets[loc];
+    return `/daynight/${loc}/HighresScreenshot00${String(n).padStart(3, "0")}_result.webp`;
   };
 
-  const preloadFrame = (frame) => {
+  // Canvas Frame Repaint Draw Loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  if (
-    frame < 1 ||
-    frame > totalFrames ||
-    imageCache.current[frame]
-  ) return;
+    const cacheKey = `${currentLocation}_${currentFrame}`;
+    const cachedImg = imageCache.current[cacheKey];
 
-  const n =
-    frame +
-    offsets[currentLocation];
+    if (cachedImg && cachedImg.complete) {
+      ctx.drawImage(cachedImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      // Inline fallback stream if user outpaces network asset loading stream
+      const img = new Image();
+      img.src = getImagePath(currentLocation, currentFrame);
+      img.onload = () => {
+        imageCache.current[cacheKey] = img;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+    }
+  }, [currentLocation, currentFrame]);
 
-  const img = new Image();
+  // Responsive Layout Synchronization Viewport Logic
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.width = window.innerWidth * window.devicePixelRatio;
+      canvas.height = window.innerHeight * window.devicePixelRatio;
 
-  img.src =
-    `/daynight/${currentLocation}/HighresScreenshot${String(n).padStart(5, "0")}_result.webp`;
+      const ctx = canvas.getContext("2d");
+      const cachedImg = imageCache.current[`${currentLocation}_${currentFrame}`];
+      if (ctx && cachedImg && cachedImg.complete) {
+        ctx.drawImage(cachedImg, 0, 0, canvas.width, canvas.height);
+      }
+    };
 
-  imageCache.current[frame] = img;
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, [currentLocation, currentFrame]);
 
-};
+  // Optimized Global Caching Strategy Preloader Sequence
+  useEffect(() => {
+    activePreloadLocationRef.current = currentLocation;
+    let index = 1;
 
-useEffect(() => {
+    const loadNext = () => {
+      if (activePreloadLocationRef.current !== currentLocation || index > totalFrames) return;
 
-  imageCache.current = {};
+      const cacheKey = `${currentLocation}_${index}`;
+      if (imageCache.current[cacheKey]) {
+        index++;
+        loadNext();
+        return;
+      }
 
-  let index = 1;
+      const img = new Image();
+      img.src = getImagePath(currentLocation, index);
+      img.onload = () => {
+        imageCache.current[cacheKey] = img;
+        
+        // Initial paint execution fallback guard rule
+        if (index === currentFrame && canvasRef.current) {
+          const ctx = canvasRef.current.getContext("2d");
+          if (ctx) ctx.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+        index++;
+        setTimeout(loadNext, 30);
+      };
+      img.onerror = () => {
+        index++;
+        loadNext();
+      };
+    };
 
-  const loadNext = () => {
-
-    if (index > totalFrames)
-      return;
-
-    preloadFrame(index);
-
-    index++;
-
-    setTimeout(
-      loadNext,
-      20
-    );
-
-  };
-
-  loadNext();
-
-}, [currentLocation]);
+    loadNext();
+  }, [currentLocation]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
-      <img
-        src={getImagePath()}
-        alt=""
-        className="w-full h-full object-cover object-center"
-      />
+    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
+      
+      {/* High-Performance Canvas Graphics Layer */}
+      <canvas ref={canvasRef} className="w-full h-full object-cover pointer-events-none" />
 
-      {/* View tabs — top center */}
+      {/* View Tabs Overlay Menu */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#1a3438]/80 backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_4px_20px_rgba(0,0,0,0.35)]">
         {locations.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setCurrentLocation(key)}
-            className={`
-              px-6 py-2 rounded-[10px] text-sm tracking-widest transition-all duration-200
-              ${currentLocation === key
+            onClick={() => {
+              setCurrentFrame(1);
+              setCurrentLocation(key);
+            }}
+            className={`px-6 py-2 rounded-[10px] text-sm tracking-widest transition-all duration-300 ${
+              currentLocation === key
                 ? "bg-[#DEC494] text-[#1a3438] font-semibold shadow-[0_2px_12px_rgba(222,196,148,0.3)]"
                 : "text-[#DEC494]/60 hover:text-[#DEC494] hover:bg-[#DEC494]/10"
-              }
-            `}
+            }`}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {/* Slider bar — bottom center */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 rounded-2xl bg-[#1a3438]/80 backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] w-[540px]">
-
-        {/* Sun icon box */}
+      {/* Slider Track Controller */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 rounded-2xl bg-[#1a3438]/80 backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] w-[90vw] max-w-[540px]">
+        
         <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#DEC494]/10 border border-[#DEC494]/20 flex-shrink-0">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DEC494" strokeWidth="2" strokeLinecap="round">
             <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -123,16 +153,9 @@ useEffect(() => {
           </svg>
         </div>
 
-        {/* Track */}
         <div className="relative flex-1 h-9 flex items-center">
-          {/* Track bg */}
           <div className="absolute inset-x-0 h-1 rounded-full bg-[#DEC494]/15" />
-          {/* Track fill */}
-          <div
-            className="absolute left-0 h-1 rounded-full bg-[#DEC494] transition-all duration-75"
-            style={{ width: `${sliderPercent}%` }}
-          />
-          {/* Native range — invisible but interactive */}
+          <div className="absolute left-0 h-1 rounded-full bg-[#DEC494]" style={{ width: `${sliderPercent}%` }} />
           <input
             type="range"
             min="1"
@@ -140,28 +163,21 @@ useEffect(() => {
             step="1"
             value={currentFrame}
             onChange={(e) => setCurrentFrame(Number(e.target.value))}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
-            style={{ zIndex: 10 }}
+            className="absolute inset-0 w-full opacity-0 cursor-pointer h-full z-10"
           />
-          {/* Custom thumb */}
-          <div
-            className="absolute w-7 h-7 rounded-full bg-[#DEC494] flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] pointer-events-none transition-all duration-75"
-            style={{ left: `calc(${sliderPercent}% - 14px)` }}
-          >
+          <div className="absolute w-7 h-7 rounded-full bg-[#DEC494] flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] pointer-events-none" style={{ left: `calc(${sliderPercent}% - 14px)` }}>
             <div className="w-2.5 h-2.5 rounded-full bg-[#1a3438]" />
           </div>
         </div>
 
-        {/* Moon icon box */}
         <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#DEC494]/10 border border-[#DEC494]/20 flex-shrink-0">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DEC494" strokeWidth="2" strokeLinecap="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </div>
 
-        {/* Time badge */}
         <div className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#DEC494]/10 border border-[#DEC494]/20">
-          <span className="text-[#DEC494] text-xs tracking-widest">{frameToTime(currentFrame)}</span>
+          <span className="text-[#DEC494] text-xs tracking-widest font-mono">{frameToTime(currentFrame)}</span>
         </div>
 
       </div>

@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { AmenitiesCaches } from "../utils/imageCache";
 
 const amenities = [
-  { id: 1, name: "Club House",         image: "/Amenities/Clubhouse.webp",       x: 57.4,  y: 6.5 },
-  { id: 2, name: "Swimming Pool",      image: "/Amenities/Swimming Pool.webp",   x: 55,    y: 3.2 },
-  { id: 3, name: "Kids Play Area",     image: "/Amenities/Kids Play Area.webp",  x: 47.5,  y: 15  },
-  { id: 4, name: "Picnic Area",        image: "/Amenities/Picnic Area.webp",     x: 25.5,  y: 41  },
-  { id: 5, name: "Pet Park",           image: "/Amenities/Pet Park.webp",        x: 68,    y: 89  },
-  { id: 6, name: "Tree Park",          image: "/Amenities/Tree Park.webp",       x: 49,    y: 7   },
-  { id: 7, name: "Orchard",            image: "/Amenities/Orchard.webp",         x: 24,    y: 53  },
+  { id: 1, name: "Club House",         image: "/Amenities/Clubhouse.webp",       x: 58.5,  y: 12 },
+  { id: 2, name: "Swimming Pool",      image: "/Amenities/Swimming Pool.webp",   x: 55,    y: 9  },
+  { id: 3, name: "Kids Play Area",     image: "/Amenities/Kids Play Area.webp",  x: 49,    y: 20 },
+  { id: 4, name: "Picnic Area",        image: "/Amenities/Picnic Area.webp",     x: 25.5,  y: 41 },
+  { id: 5, name: "Pet Park",           image: "/Amenities/Pet Park.webp",        x: 68,    y: 87 },
+  { id: 6, name: "Tree Park",          image: "/Amenities/Tree Park.webp",       x: 50,    y: 12 },
+  { id: 7, name: "Orchard",            image: "/Amenities/Orchard.webp",         x: 24,    y: 53 },
 ];
 
 export default function AmenitiesViewer() {
@@ -18,33 +18,26 @@ export default function AmenitiesViewer() {
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
   const imageCache = useRef(AmenitiesCaches);
-  
-  // Track visual dimensions to lock layout scales perfectly across all browsers
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, left: 0, top: 0 });
   const mapRef = useRef(null);
 
   const selected = selectedIndex !== null ? amenities[selectedIndex] : null;
 
-  // Image Asset Preloader
-  const preloadFrame = (index) => {
-    if (index < 0 || index >= amenities.length || imageCache.current[index]) return;
-    const img = new Image();
-    img.src = amenities[index].image;
-    imageCache.current[index] = img;
-  };
-
   useEffect(() => {
     let index = 0;
     const loadNext = () => {
       if (index >= amenities.length) return;
-      preloadFrame(index);
+      if (!imageCache.current[index]) {
+        const img = new Image();
+        img.src = amenities[index].image;
+        imageCache.current[index] = img;
+      }
       index++;
       setTimeout(loadNext, 50);
     };
     loadNext();
   }, []);
 
-  // Responsive Math: Calculates how 'object-cover' alters pixels in different viewport shapes
   useEffect(() => {
     if (selectedIndex !== null) return;
 
@@ -53,8 +46,6 @@ export default function AmenitiesViewer() {
       
       const vW = window.innerWidth;
       const vH = window.innerHeight;
-      
-      // Update this aspect ratio value if your masterplan map is not 16:9
       const imgAspect = 16 / 9; 
       const screenAspect = vW / vH;
 
@@ -81,7 +72,6 @@ export default function AmenitiesViewer() {
     return () => window.removeEventListener("resize", handleResize);
   }, [selectedIndex]);
 
-  // Photo Sphere Viewer Instance Cycle Control
   useEffect(() => {
     if (selectedIndex === null) {
       if (viewerRef.current) {
@@ -135,17 +125,14 @@ export default function AmenitiesViewer() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
 
-      {/* ── FULL SCREEN COMPENSATED MASTERPLAN VIEW ── */}
+      {/* ── MASTERPLAN VIEW ── */}
       {selectedIndex === null && (
         <div ref={mapRef} className="absolute inset-0 w-full h-full overflow-hidden">
-          
-          {/* Background Map covers 100% viewport natively */}
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center pointer-events-none"
             style={{ backgroundImage: "url('/masterplan/HighresScreenshot00060_result.webp')" }}
           />
 
-          {/* Absolute coordinate plane matching browser scaling layout calculations exactly */}
           <div 
             className="absolute pointer-events-none"
             style={{
