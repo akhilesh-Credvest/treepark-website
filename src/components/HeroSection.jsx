@@ -10,42 +10,40 @@ import AmenitiesViewer from "./AmenitiesViewer";
 import LocationViewer from "./LocationViewer";
 import HighlightsViewer from "./HighlightsViewer";
 import Logo from "./Logo";
-// import LoadingScreen from "./LoadingScreen";
+import LoadingScreen from "./LoadingScreen";
 
-// import { preloadImages } from "../utils/preloadAssets";
+import { preloadImages } from "../utils/preloadAssets";
 
 export default function HeroSection() {
 
   const [activeMenu, setActiveMenu] = useState("Home");
 
-//   const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-//   const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(0);
 
-// useEffect(() => {
+useEffect(() => {
 
-//   const startupAssets = [];
+  const startupAssets = [];
 
-//   // HOME SEQUENCE ONLY
+  for (let i = 22; i <= 30; i++) {
 
-// for (let i = 22; i <= 93; i++) {
+    startupAssets.push(
+      `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`
+    );
 
-//   startupAssets.push(
-//     `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`
-//   );
+  }
 
-// }
+  preloadImages(
+    startupAssets,
+    setProgress
+  ).then(() => {
 
-//   preloadImages(
-//     startupAssets,
-//     setProgress
-//   ).then(() => {
+    setIsLoading(false);
 
-//     setIsLoading(false);
+  });
 
-//   });
-
-// }, []);
+}, []);
 
 // useEffect(() => {
 

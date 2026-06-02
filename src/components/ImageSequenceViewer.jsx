@@ -1,16 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function ImageSequenceViewer() {
   const totalFrames = 72;
-  const [currentFrame, setCurrentFrame] = useState(1);
+const [currentFrame, setCurrentFrame] = useState(1);
+  const imageCache = useRef({});
 
   const sliderPercent = ((currentFrame - 1) / (totalFrames - 1)) * 100;
 
-  const getImagePath = (index) => {
-    return `/sequence/HighresScreenshot000${String(index + 21).padStart(2, "0")}_result.webp`;
+const getImagePath = (frame) => {
+  return `/sequence/HighresScreenshot${String(frame + 21).padStart(5, "0")}_result.webp`;
+};
+
+  const preloadFrame = (frame) => {
+
+  if (
+    frame < 0 ||
+    frame >= totalFrames ||
+    imageCache.current[frame]
+  ) return;
+
+  const img = new Image();
+
+  img.src = getImagePath(frame);
+
+  imageCache.current[frame] = img;
+
+};
+
+useEffect(() => {
+
+  for (
+    let i = currentFrame - 5;
+    i <= currentFrame + 5;
+    i++
+  ) {
+
+    preloadFrame(i);
+
+  }
+
+}, [currentFrame]);
+
+useEffect(() => {
+
+  let index = 0;
+
+  const loadNext = () => {
+
+    if (index >= totalFrames)
+      return;
+
+    preloadFrame(index);
+
+    index++;
+
+    if ("requestIdleCallback" in window) {
+
+      requestIdleCallback(loadNext);
+
+    } else {
+
+      setTimeout(loadNext, 50);
+
+    }
+
   };
+
+  loadNext();
+
+}, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
