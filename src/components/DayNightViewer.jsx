@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 
 const locations = [
@@ -25,6 +25,7 @@ function frameToTime(frame) {
 export default function DayNightViewer() {
   const [currentLocation, setCurrentLocation] = useState("maingate");
   const [currentFrame, setCurrentFrame] = useState(1);
+ const imageCache = useRef(dayNightCache);
 
   const sliderPercent = ((currentFrame - 1) / (totalFrames - 1)) * 100;
 
@@ -36,6 +37,35 @@ export default function DayNightViewer() {
     
   };
 
+    useEffect(() => {
+
+  for (
+    let i = currentFrame - 4;
+    i <= currentFrame + 4;
+    i++
+  ) {
+
+    if (
+      i < 1 ||
+      i > totalFrames
+    ) continue;
+
+    const n =
+      i +
+      offsets[currentLocation];
+
+    const img =
+      new Image();
+
+    img.src =
+      `/daynight/${currentLocation}/HighresScreenshot${String(n).padStart(5,"0")}_result.webp`;
+
+  }
+
+}, [
+  currentFrame,
+  currentLocation
+]);
   
 
   return (
