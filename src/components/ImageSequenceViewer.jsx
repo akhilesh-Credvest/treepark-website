@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { sequenceCache } from "../utils/imageCache";
 
 export default function ImageSequenceViewer() {
   const totalFrames = 72;
 const [currentFrame, setCurrentFrame] = useState(1);
-  const imageCache = useRef({});
+const imageCache = useRef(sequenceCache);
 
   const sliderPercent = ((currentFrame - 1) / (totalFrames - 1)) * 100;
 

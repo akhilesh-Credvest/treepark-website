@@ -131,43 +131,91 @@ useEffect(() => {
 
 //   }
 
-  return (
+return (
 
-    <main className="relative w-full h-screen overflow-hidden">
+  <main className="relative w-full h-screen overflow-hidden">
 
-      <Logo />
+    <Logo />
 
-      {activeMenu === "Home" && (
-        <ImageSequenceViewer />
-      )}
+    {/* Home */}
 
-      {activeMenu === "DayNight" && (
-        <DayNightViewer />
-      )}
+    <div
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        activeMenu === "Home"
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <ImageSequenceViewer />
+    </div>
 
-      {activeMenu === "Tour360" && (
-        <Tour360Viewer />
-      )}
+    {/* Day Night */}
 
-      {activeMenu === "Amenities" && (
-        <AmenitiesViewer />
-      )}
+    <div
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        activeMenu === "DayNight"
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <DayNightViewer />
+    </div>
 
-      {activeMenu === "Location" && (
-        <LocationViewer />
-      )}
+    {/* 360 Tour */}
 
-      {activeMenu === "Highlights" && (
-        <HighlightsViewer />
-      )}
+    <div
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        activeMenu === "Tour360"
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <Tour360Viewer />
+    </div>
 
-      <SideMenu
-        activeMenu={activeMenu}
-        setActiveMenu={setActiveMenu}
-      />
+    {/* Amenities */}
 
-    </main>
+    <div
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        activeMenu === "Amenities"
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <AmenitiesViewer />
+    </div>
 
-  );
+    {/* Location */}
+
+    <div
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        activeMenu === "Location"
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <LocationViewer />
+    </div>
+
+    {/* Highlights */}
+
+    <div
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        activeMenu === "Highlights"
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <HighlightsViewer />
+    </div>
+
+    <SideMenu
+      activeMenu={activeMenu}
+      setActiveMenu={setActiveMenu}
+    />
+
+  </main>
+
+);
 
 }
