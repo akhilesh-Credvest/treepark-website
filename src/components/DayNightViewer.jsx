@@ -25,14 +25,39 @@ export default function DayNightViewer() {
   const [currentLocation, setCurrentLocation] = useState("maingate");
   const [currentFrame, setCurrentFrame] = useState(1);
   const canvasRef = useRef(null);
-  const imageCache = useRef(dayNightCache);
-  const activePreloadLocationRef = useRef(null);
 
   const sliderPercent = ((currentFrame - 1) / (totalFrames - 1)) * 100;
 
   const getImagePath = (loc, frame) => {
     const n = frame + offsets[loc];
     return `/daynight/${loc}/HighresScreenshot00${String(n).padStart(3, "0")}_result.webp`;
+  };
+
+  // Hardware Render Handler implementing a clean, responsive layout 'object-cover' fallback
+  const drawImageToCanvas = (ctx, canvas, img) => {
+    if (!ctx || !canvas || !img) return;
+
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const imgRatio = img.width / img.height;
+    const canvasRatio = canvasWidth / canvasHeight;
+    
+    let drawWidth, drawHeight, xOffset, yOffset;
+
+    if (imgRatio > canvasRatio) {
+      drawHeight = canvasHeight;
+      drawWidth = canvasHeight * imgRatio;
+      xOffset = (canvasWidth - drawWidth) / 2;
+      yOffset = 0;
+    } else {
+      drawWidth = canvasWidth;
+      drawHeight = canvasWidth / imgRatio;
+      xOffset = 0;
+      yOffset = (canvasHeight - drawHeight) / 2;
+    }
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
   };
 
   // Canvas Frame Repaint Draw Loop
@@ -43,17 +68,16 @@ export default function DayNightViewer() {
     if (!ctx) return;
 
     const cacheKey = `${currentLocation}_${currentFrame}`;
-    const cachedImg = imageCache.current[cacheKey];
+    const cachedImg = dayNightCache[cacheKey];
 
     if (cachedImg && cachedImg.complete) {
-      ctx.drawImage(cachedImg, 0, 0, canvas.width, canvas.height);
+      drawImageToCanvas(ctx, canvas, cachedImg);
     } else {
-      // Inline fallback stream if user outpaces network asset loading stream
       const img = new Image();
       img.src = getImagePath(currentLocation, currentFrame);
       img.onload = () => {
-        imageCache.current[cacheKey] = img;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        dayNightCache[cacheKey] = img;
+        drawImageToCanvas(ctx, canvas, img);
       };
     }
   }, [currentLocation, currentFrame]);
@@ -63,13 +87,16 @@ export default function DayNightViewer() {
     const handleResize = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
+      
+      canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
+      canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
 
       const ctx = canvas.getContext("2d");
-      const cachedImg = imageCache.current[`${currentLocation}_${currentFrame}`];
+      const cacheKey = `${currentLocation}_${currentFrame}`;
+      const cachedImg = dayNightCache[cacheKey];
+      
       if (ctx && cachedImg && cachedImg.complete) {
-        ctx.drawImage(cachedImg, 0, 0, canvas.width, canvas.height);
+        drawImageToCanvas(ctx, canvas, cachedImg);
       }
     };
 
@@ -78,48 +105,11 @@ export default function DayNightViewer() {
     return () => window.removeEventListener("resize", handleResize);
   }, [currentLocation, currentFrame]);
 
-  // Optimized Global Caching Strategy Preloader Sequence
-  useEffect(() => {
-    activePreloadLocationRef.current = currentLocation;
-    let index = 1;
-
-    const loadNext = () => {
-      if (activePreloadLocationRef.current !== currentLocation || index > totalFrames) return;
-
-      const cacheKey = `${currentLocation}_${index}`;
-      if (imageCache.current[cacheKey]) {
-        index++;
-        loadNext();
-        return;
-      }
-
-      const img = new Image();
-      img.src = getImagePath(currentLocation, index);
-      img.onload = () => {
-        imageCache.current[cacheKey] = img;
-        
-        // Initial paint execution fallback guard rule
-        if (index === currentFrame && canvasRef.current) {
-          const ctx = canvasRef.current.getContext("2d");
-          if (ctx) ctx.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        }
-        index++;
-        setTimeout(loadNext, 30);
-      };
-      img.onerror = () => {
-        index++;
-        loadNext();
-      };
-    };
-
-    loadNext();
-  }, [currentLocation]);
-
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#0b1719] select-none">
       
       {/* High-Performance Canvas Graphics Layer */}
-      <canvas ref={canvasRef} className="w-full h-full object-cover pointer-events-none" />
+      <canvas ref={canvasRef} className="w-full h-full block" />
 
       {/* View Tabs Overlay Menu */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#1a3438]/80 backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_4px_20px_rgba(0,0,0,0.35)]">
@@ -163,7 +153,7 @@ export default function DayNightViewer() {
             step="1"
             value={currentFrame}
             onChange={(e) => setCurrentFrame(Number(e.target.value))}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer h-full z-10"
+            className="absolute inset-0 w-full opacity-0 cursor-pointer h-full z-20"
           />
           <div className="absolute w-7 h-7 rounded-full bg-[#DEC494] flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.4)] pointer-events-none" style={{ left: `calc(${sliderPercent}% - 14px)` }}>
             <div className="w-2.5 h-2.5 rounded-full bg-[#1a3438]" />
