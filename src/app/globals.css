@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@import "@photo-sphere-viewer/core/index.css";
+
+/* ── Luxury gold slider (used in DayNight & ImageSequence) ── */
+.luxury-slider {
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  z-index: 5;
+  outline: none;
+}
+
+.luxury-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(222, 196, 148, 0.15);
+  border-radius: 4px;
+}
+
+.luxury-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #DEC494;
+  border: none;
+  box-shadow:
+    0 0 0 4px rgba(222, 196, 148, 0.15),
+    0 2px 10px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  margin-top: -12px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+}
+
+.luxury-slider::-webkit-slider-thumb:hover {
+  box-shadow:
+    0 0 0 6px rgba(222, 196, 148, 0.22),
+    0 2px 14px rgba(0, 0, 0, 0.5);
+  transform: scale(1.1);
+}
+
+.luxury-slider::-moz-range-track {
+  height: 4px;
+  background: rgba(222, 196, 148, 0.15);
+  border-radius: 4px;
+}
+
+.luxury-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #DEC494;
+  border: none;
+  box-shadow:
+    0 0 0 4px rgba(222, 196, 148, 0.15),
+    0 2px 10px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.luxury-slider::-moz-range-progress {
+  height: 4px;
+  background: #DEC494;
+  border-radius: 4px;
+}
+
+/* ── Neo cyan slider (used in 360 sequence viewer) ── */
+.neo-slider {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(103, 232, 249, 0.15);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.neo-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #67e8f9;
+  border: 3px solid rgba(103, 232, 249, 0.25);
+  box-shadow:
+    0 0 8px rgba(103, 232, 249, 0.6),
+    0 0 20px rgba(103, 232, 249, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.neo-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow:
+    0 0 12px rgba(103, 232, 249, 0.8),
+    0 0 28px rgba(103, 232, 249, 0.4);
+}
+
+.neo-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #67e8f9;
+  border: 3px solid rgba(103, 232, 249, 0.25);
+  box-shadow:
+    0 0 8px rgba(103, 232, 249, 0.6),
+    0 0 20px rgba(103, 232, 249, 0.3);
+  cursor: pointer;
+}
+
+/* ── Photo Sphere Viewer overrides ── */
+.psv-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.psv-loader,
+.psv-loader-container {
+  display: none !important;
+}
+
+.psv-navbar {
+  display: none !important;
+}
+.route-line {
+
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+
+  animation: drawRoute 1.5s ease forwards;
+
+}
+
+@keyframes drawRoute {
+
+  to {
+
+    stroke-dashoffset: 0;
+
+  }
+
+}
