@@ -17,25 +17,20 @@ export default function AmenitiesViewer() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
-  const imageCache = useRef(AmenitiesCaches);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, left: 0, top: 0 });
   const mapRef = useRef(null);
 
   const selected = selectedIndex !== null ? amenities[selectedIndex] : null;
 
+  // Sync background thread cache arrays locally
   useEffect(() => {
-    let index = 0;
-    const loadNext = () => {
-      if (index >= amenities.length) return;
-      if (!imageCache.current[index]) {
+    amenities.forEach((item, index) => {
+      if (!AmenitiesCaches[index]) {
         const img = new Image();
-        img.src = amenities[index].image;
-        imageCache.current[index] = img;
+        img.src = item.image;
+        AmenitiesCaches[index] = img;
       }
-      index++;
-      setTimeout(loadNext, 50);
-    };
-    loadNext();
+    });
   }, []);
 
   useEffect(() => {
@@ -72,6 +67,7 @@ export default function AmenitiesViewer() {
     return () => window.removeEventListener("resize", handleResize);
   }, [selectedIndex]);
 
+  // Handle Photo Sphere mounting via cache buffers
   useEffect(() => {
     if (selectedIndex === null) {
       if (viewerRef.current) {
@@ -94,11 +90,14 @@ export default function AmenitiesViewer() {
         await import("@photo-sphere-viewer/core/index.css");
 
         if (destroyed || !containerRef.current) return;
-        const panorama = amenities[selectedIndex].image;
+        
+        // INTERCEPT POINT: Bypass network fetching by pulling the preloaded instance
+        const preloadedAsset = AmenitiesCaches[selectedIndex];
+        const panoramaSource = preloadedAsset ? preloadedAsset.src : amenities[selectedIndex].image;
 
         if (viewerRef.current) {
           try {
-            await viewerRef.current.setPanorama(panorama, { transition: { duration: 800 } });
+            await viewerRef.current.setPanorama(panoramaSource, { transition: { duration: 400 } });
             return;
           } catch (err) {
             viewerRef.current.destroy();
@@ -108,11 +107,12 @@ export default function AmenitiesViewer() {
 
         viewerRef.current = new Viewer({
           container: containerRef.current,
-          panorama,
+          panorama: panoramaSource,
           navbar: [],
           mousewheel: true,
           defaultYaw: 0,
-          panoramaOptions: { cors: "anonymous" },
+          loadingImg: null, // Clear built-in text fields to speed up layout transition
+          // panoramaOptions: { cors: "anonymous" },
         });
       } catch (err) {
         console.error("PSV error:", err);
@@ -163,9 +163,9 @@ export default function AmenitiesViewer() {
       {/* ── PANORAMA VIEW ── */}
       {selectedIndex !== null && (
         <>
-          <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+          <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#0b1719]" />
 
-          <div className="absolute bottom-8 left-8 z-50 flex flex-col">
+          <div className="absolute bottom-8 left-8 z-50 flex flex-col pointer-events-none">
             <span className="text-[#DEC494] text-xl tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-light">
               {selected?.name}
             </span>

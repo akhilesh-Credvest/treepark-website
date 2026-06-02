@@ -117,7 +117,8 @@ export default function DayNightViewer() {
           <button
             key={key}
             onClick={() => {
-              setCurrentFrame(1);
+              // REMOVED: setCurrentFrame(1);
+              // The active frame timeline position remains locked when changing locations.
               setCurrentLocation(key);
             }}
             className={`px-6 py-2 rounded-[10px] text-sm tracking-widest transition-all duration-300 ${

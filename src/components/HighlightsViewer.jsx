@@ -1,5 +1,7 @@
 "use client";
+
 import { useEffect, useRef } from "react";
+import { globalAppCache } from "../utils/imageCache";
 
 export default function HighlightsViewer({ isActive }) {
   const videoRef = useRef(null);
@@ -8,8 +10,16 @@ export default function HighlightsViewer({ isActive }) {
     const video = videoRef.current;
     if (!video) return;
 
+    // Use preloaded Blob URL if available, otherwise fallback to local public path
+    const targetSource = globalAppCache.highlights.videoBlobUrl || "/videos/highlights.mp4";
+
     if (isActive) {
-      video.load(); // Forces fresh memory registration
+      // Safely apply source adjustments if it changed or hasn't loaded yet
+      if (video.src !== window.location.origin + targetSource && !video.src.startsWith('blob:')) {
+        video.src = targetSource;
+      }
+      
+      video.load(); // Registers file layout directly inside engine components
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => console.log("Video autoplay prevented:", err));
@@ -29,9 +39,7 @@ export default function HighlightsViewer({ isActive }) {
         playsInline
         preload="auto"
         className="w-full h-full object-cover pointer-events-none"
-      >
-        <source src="/videos/highlights.mp4" type="video/mp4" />
-      </video>
+      />
     </div>
   );
 }

@@ -38,9 +38,9 @@ export default function Tour360Viewer() {
           mousewheel: true,
           defaultYaw: 0,
           // CRITICAL PRODUCTION FIX: Tells WebGL engine canvas to securely allow cross-origin assets
-          panoramaOptions: {
-            cors: "anonymous", 
-          },
+          // panoramaOptions: {
+          //   cors: "anonymous", 
+          // },
         });
 
         viewerRef.current = psvViewer;
