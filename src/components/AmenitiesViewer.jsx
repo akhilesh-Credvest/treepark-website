@@ -3,21 +3,22 @@
 import { useState, useEffect, useRef } from "react";
 import { AmenitiesCaches } from "../utils/imageCache";
 
+// Cleaned up image paths to be lower-case and hyphenated for production safety
 const amenities = [
-  { id: 1, name: "Club House",              image: "/amenities/Clubhouse.webp",        x: "57.4%",  y: "6.5%" },
-  { id: 2, name: "Swimming Pool",           image: "/amenities/Swimming Pool.webp",            x: "55%",y: "3.2%"   },
-  { id: 3, name: "Kids Play Area",          image: "/amenities/Kids Play Area.webp",            x: "47.5%",  y: "15%"  },
-  { id: 4, name: "Picnic Area",             image: "/amenities/Picnic Area.webp",             x: "25.5%",  y: "41%"  },
-  { id: 5, name: "Pet Park",                image: "/amenities/Pet Park.webp",    x: "68%",  y: "89%"  },
-  { id: 6, name: "Tree Park", image: "/amenities/Tree Park.webp",    x: "49%",  y: "7%"  },
-  { id: 7, name: "Orchard", image: "/amenities/Orchard.webp",    x: "24%",  y: "53%"  },
+  { id: 1, name: "Club House",         image: "/Amenities/clubhouse.webp",       x: "57.4%",  y: "6.5%" },
+  { id: 2, name: "Swimming Pool",      image: "/Amenities/swimming-pool.webp",   x: "55%",    y: "3.2%" },
+  { id: 3, name: "Kids Play Area",     image: "/Amenities/kids-play-area.webp",  x: "47.5%",  y: "15%"  },
+  { id: 4, name: "Picnic Area",        image: "/Amenities/picnic-area.webp",     x: "25.5%",  y: "41%"  },
+  { id: 5, name: "Pet Park",           image: "/Amenities/pet-park.webp",        x: "68%",    y: "89%"  },
+  { id: 6, name: "Tree Park",          image: "/Amenities/tree-park.webp",       x: "49%",    y: "7%"   },
+  { id: 7, name: "Orchard",            image: "/Amenities/orchard.webp",         x: "24%",    y: "53%"  },
 ];
 
 export default function AmenitiesViewer() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
-const imageCache = useRef(AmenitiesCaches);
+  const imageCache = useRef(AmenitiesCaches);
 
   const selected = selectedIndex !== null ? amenities[selectedIndex] : null;
 
@@ -26,122 +27,68 @@ const imageCache = useRef(AmenitiesCaches);
   };
 
   const preloadFrame = (index) => {
+    if (
+      index < 0 ||
+      index >= amenities.length ||
+      imageCache.current[index]
+    ) return;
 
-  if (
-    index < 0 ||
-    index >= amenities.length ||
-    imageCache.current[index]
-  ) return;
-
-  const img = new Image();
-
-  img.src = amenities[index].image;
-
-  imageCache.current[index] = img;
-
-};
-
-  useEffect(() => {
-
-  let index = 0;
-
-  const loadNext = () => {
-
-    if (index >= amenities.length)
-      return;
-
-    preloadFrame(index);
-
-    index++;
-
-    setTimeout(
-      loadNext,
-      50
-    );
-
+    const img = new Image();
+    img.src = amenities[index].image;
+    imageCache.current[index] = img;
   };
 
-  loadNext();
+  useEffect(() => {
+    let index = 0;
+    const loadNext = () => {
+      if (index >= amenities.length) return;
+      preloadFrame(index);
+      index++;
+      setTimeout(loadNext, 50);
+    };
+    loadNext();
+  }, []);
 
-}, []);
+  useEffect(() => {
+    if (selectedIndex === null || !containerRef.current) return;
 
-useEffect(() => {
+    let destroyed = false;
 
-  if (
-    selectedIndex === null ||
-    !containerRef.current
-  ) return;
+    (async () => {
+      try {
+        const { Viewer } = await import("@photo-sphere-viewer/core");
+        await import("@photo-sphere-viewer/core/index.css");
 
-  let destroyed = false;
+        if (destroyed || !containerRef.current) return;
 
-  (async () => {
+        const panorama = amenities[selectedIndex].image;
 
-    try {
-
-      const { Viewer } =
-        await import("@photo-sphere-viewer/core");
-
-      await import(
-        "@photo-sphere-viewer/core/index.css"
-      );
-
-      if (
-        destroyed ||
-        !containerRef.current
-      ) return;
-
-      const panorama =
-        amenities[selectedIndex].image;
-
-      if (viewerRef.current) {
-
-        viewerRef.current.setPanorama(
-          panorama,
-          {
+        if (viewerRef.current) {
+          viewerRef.current.setPanorama(panorama, {
             transition: {
               duration: 800,
             },
-          }
-        );
+          });
+          return;
+        }
 
-        return;
-
-      }
-
-      viewerRef.current =
-        new Viewer({
-
-          container:
-            containerRef.current,
-
+        viewerRef.current = new Viewer({
+          container: containerRef.current,
           panorama,
-
           navbar: [],
-
           mousewheel: true,
-
           defaultYaw: 0,
-
         });
 
-    } catch (err) {
+      } catch (err) {
+        console.error("PSV error:", err);
+      }
+    })();
 
-      console.error(
-        "PSV error:",
-        err
-      );
-
-    }
-
-  })();
-
-  return () => {
-
-    destroyed = true;
-
-  };
-
-}, [selectedIndex]);
+    return () => {
+      destroyed = true;
+    };
+  }, [selectedIndex]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
@@ -151,7 +98,7 @@ useEffect(() => {
         <>
           <img
             src="/masterplan/HighresScreenshot00060_result.webp"
-            alt=""
+            alt="Masterplan"
             className="w-full h-full object-cover"
           />
 
@@ -174,13 +121,10 @@ useEffect(() => {
           {/* Viewer canvas */}
           <div ref={containerRef} className="absolute inset-0" />
 
-          {/* Name — bottom left, no background */}
+          {/* Name — bottom left */}
           <div className="absolute bottom-8 left-8 z-50 flex flex-col">
-            {/* <span className="text-[#DEC494]/50 text-[10px] tracking-[0.2em] mb-1">
-              {String(selectedIndex + 1).padStart(2, "0")} / {String(amenities.length).padStart(2, "0")}
-            </span> */}
             <span className="text-[#DEC494] text-xl tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-              {selected.name}
+              {selected?.name}
             </span>
           </div>
 
@@ -190,7 +134,7 @@ useEffect(() => {
             className="absolute top-6 right-6 z-50 flex items-center gap-2 px-5 py-2.5 rounded-xl backdrop-blur-2xl border border-[#DEC494]/20 text-[#DEC494] text-sm tracking-widest hover:bg-[#DEC494]/10 transition-all duration-200"
             style={{ background: "rgba(26,52,56,0.75)" }}
           >
-            Back →
+            Back &rarr;
           </button>
         </>
       )}
