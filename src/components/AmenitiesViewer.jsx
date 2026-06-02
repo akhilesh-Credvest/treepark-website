@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { AmenitiesCaches } from "../utils/imageCache";
 
 const amenities = [
   { id: 1, name: "Club House",              image: "/amenities/Clubhouse.webp",        x: "57.4%",  y: "6.5%" },
@@ -16,6 +17,7 @@ export default function AmenitiesViewer() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
+const imageCache = useRef(AmenitiesCaches);
 
   const selected = selectedIndex !== null ? amenities[selectedIndex] : null;
 
@@ -23,43 +25,123 @@ export default function AmenitiesViewer() {
     setSelectedIndex((prev) => (prev + dir + amenities.length) % amenities.length);
   };
 
+  const preloadFrame = (index) => {
+
+  if (
+    index < 0 ||
+    index >= amenities.length ||
+    imageCache.current[index]
+  ) return;
+
+  const img = new Image();
+
+  img.src = amenities[index].image;
+
+  imageCache.current[index] = img;
+
+};
+
   useEffect(() => {
-    if (selectedIndex === null || !containerRef.current) return;
 
-    let destroyed = false;
+  let index = 0;
 
-    (async () => {
-      try {
-        const { Viewer } = await import("@photo-sphere-viewer/core");
-        await import("@photo-sphere-viewer/core/index.css");
+  const loadNext = () => {
 
-        if (destroyed || !containerRef.current) return;
+    if (index >= amenities.length)
+      return;
 
-        if (viewerRef.current) {
-          viewerRef.current.destroy();
-          viewerRef.current = null;
-        }
+    preloadFrame(index);
 
-        viewerRef.current = new Viewer({
-          container: containerRef.current,
-          panorama: amenities[selectedIndex].image,
-          navbar: [],
-          mousewheel: true,
-          touchmoveTwoFingers: false,
-        });
-      } catch (err) {
-        console.error("PSV error:", err);
-      }
-    })();
+    index++;
 
-    return () => {
-      destroyed = true;
+    setTimeout(
+      loadNext,
+      50
+    );
+
+  };
+
+  loadNext();
+
+}, []);
+
+useEffect(() => {
+
+  if (
+    selectedIndex === null ||
+    !containerRef.current
+  ) return;
+
+  let destroyed = false;
+
+  (async () => {
+
+    try {
+
+      const { Viewer } =
+        await import("@photo-sphere-viewer/core");
+
+      await import(
+        "@photo-sphere-viewer/core/index.css"
+      );
+
+      if (
+        destroyed ||
+        !containerRef.current
+      ) return;
+
+      const panorama =
+        amenities[selectedIndex].image;
+
       if (viewerRef.current) {
-        viewerRef.current.destroy();
-        viewerRef.current = null;
+
+        viewerRef.current.setPanorama(
+          panorama,
+          {
+            transition: {
+              duration: 800,
+            },
+          }
+        );
+
+        return;
+
       }
-    };
-  }, [selectedIndex]);
+
+      viewerRef.current =
+        new Viewer({
+
+          container:
+            containerRef.current,
+
+          panorama,
+
+          navbar: [],
+
+          mousewheel: true,
+
+          defaultYaw: 0,
+
+        });
+
+    } catch (err) {
+
+      console.error(
+        "PSV error:",
+        err
+      );
+
+    }
+
+  })();
+
+  return () => {
+
+    destroyed = true;
+
+  };
+
+}, [selectedIndex]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">

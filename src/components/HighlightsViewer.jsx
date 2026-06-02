@@ -1,19 +1,40 @@
 "use client";
+import { useEffect, useRef } from "react";
 
-export default function HighlightsViewer() {
+export default function HighlightsViewer({ isActive }) {
+
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+
+  if (!videoRef.current)
+    return;
+
+  if (isActive) {
+
+    videoRef.current.play();
+
+  } else {
+
+    videoRef.current.pause();
+
+    videoRef.current.currentTime = 0;
+
+  }
+
+}, [isActive]);
 
   return (
 
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      <video
-    className="absolute inset-0 w-full h-full object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-      >
+<video
+  ref={videoRef}
+  muted
+  loop
+  playsInline
+  preload="metadata"
+>
         <source
           src="/videos/highlights.mp4"
           type="video/mp4"
