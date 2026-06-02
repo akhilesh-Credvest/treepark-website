@@ -3,15 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { AmenitiesCaches } from "../utils/imageCache";
 
-// Cleaned up image paths to be lower-case and hyphenated for production safety
+// MATCHING YOUR SCREENSHOT EXACTLY: Capital "Amenities" and spaces in names
 const amenities = [
-  { id: 1, name: "Club House",         image: "/Amenities/clubhouse.webp",       x: "57.4%",  y: "6.5%" },
-  { id: 2, name: "Swimming Pool",      image: "/Amenities/swimming-pool.webp",   x: "55%",    y: "3.2%" },
-  { id: 3, name: "Kids Play Area",     image: "/Amenities/kids-play-area.webp",  x: "47.5%",  y: "15%"  },
-  { id: 4, name: "Picnic Area",        image: "/Amenities/picnic-area.webp",     x: "25.5%",  y: "41%"  },
-  { id: 5, name: "Pet Park",           image: "/Amenities/pet-park.webp",        x: "68%",    y: "89%"  },
-  { id: 6, name: "Tree Park",          image: "/Amenities/tree-park.webp",       x: "49%",    y: "7%"   },
-  { id: 7, name: "Orchard",            image: "/Amenities/orchard.webp",         x: "24%",    y: "53%"  },
+  { id: 1, name: "Club House",         image: "/Amenities/Clubhouse.webp",       x: "57.4%",  y: "6.5%" },
+  { id: 2, name: "Swimming Pool",      image: "/Amenities/Swimming Pool.webp",   x: "55%",    y: "3.2%" },
+  { id: 3, name: "Kids Play Area",     image: "/Amenities/Kids Play Area.webp",  x: "47.5%",  y: "15%"  },
+  { id: 4, name: "Picnic Area",        image: "/Amenities/Picnic Area.webp",     x: "25.5%",  y: "41%"  },
+  { id: 5, name: "Pet Park",           image: "/Amenities/Pet Park.webp",        x: "68%",    y: "89%"  },
+  { id: 6, name: "Tree Park",          image: "/Amenities/Tree Park.webp",       x: "49%",    y: "7%"   },
+  { id: 7, name: "Orchard",            image: "/Amenities/Orchard.webp",         x: "24%",    y: "53%"  },
 ];
 
 export default function AmenitiesViewer() {
@@ -78,6 +78,9 @@ export default function AmenitiesViewer() {
           navbar: [],
           mousewheel: true,
           defaultYaw: 0,
+          panoramaOptions: {
+            cors: "anonymous", // Still required for production canvas security
+          },
         });
 
       } catch (err) {
@@ -118,17 +121,14 @@ export default function AmenitiesViewer() {
       {/* ── PANORAMA VIEW ── */}
       {selectedIndex !== null && (
         <>
-          {/* Viewer canvas */}
           <div ref={containerRef} className="absolute inset-0" />
 
-          {/* Name — bottom left */}
           <div className="absolute bottom-8 left-8 z-50 flex flex-col">
             <span className="text-[#DEC494] text-xl tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
               {selected?.name}
             </span>
           </div>
 
-          {/* Back button — top right */}
           <button
             onClick={() => setSelectedIndex(null)}
             className="absolute top-6 right-6 z-50 flex items-center gap-2 px-5 py-2.5 rounded-xl backdrop-blur-2xl border border-[#DEC494]/20 text-[#DEC494] text-sm tracking-widest hover:bg-[#DEC494]/10 transition-all duration-200"
