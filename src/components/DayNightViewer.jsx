@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
+import { dayNightCache } from "../utils/imageCache";
 
 const locations = [
   { key: "maingate", label: "View 1" },
@@ -25,8 +25,7 @@ function frameToTime(frame) {
 export default function DayNightViewer() {
   const [currentLocation, setCurrentLocation] = useState("maingate");
   const [currentFrame, setCurrentFrame] = useState(1);
- const imageCache = useRef(dayNightCache);
-
+  const imageCache = useRef(dayNightCache);
   const sliderPercent = ((currentFrame - 1) / (totalFrames - 1)) * 100;
 
   const getImagePath = () => {
@@ -37,36 +36,52 @@ export default function DayNightViewer() {
     
   };
 
-    useEffect(() => {
+  const preloadFrame = (frame) => {
 
-  for (
-    let i = currentFrame - 4;
-    i <= currentFrame + 4;
-    i++
-  ) {
+  if (
+    frame < 1 ||
+    frame > totalFrames ||
+    imageCache.current[frame]
+  ) return;
 
-    if (
-      i < 1 ||
-      i > totalFrames
-    ) continue;
+  const n =
+    frame +
+    offsets[currentLocation];
 
-    const n =
-      i +
-      offsets[currentLocation];
+  const img = new Image();
 
-    const img =
-      new Image();
+  img.src =
+    `/daynight/${currentLocation}/HighresScreenshot${String(n).padStart(5, "0")}_result.webp`;
 
-    img.src =
-      `/daynight/${currentLocation}/HighresScreenshot${String(n).padStart(5,"0")}_result.webp`;
+  imageCache.current[frame] = img;
 
-  }
+};
 
-}, [
-  currentFrame,
-  currentLocation
-]);
-  
+useEffect(() => {
+
+  imageCache.current = {};
+
+  let index = 1;
+
+  const loadNext = () => {
+
+    if (index > totalFrames)
+      return;
+
+    preloadFrame(index);
+
+    index++;
+
+    setTimeout(
+      loadNext,
+      20
+    );
+
+  };
+
+  loadNext();
+
+}, [currentLocation]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
