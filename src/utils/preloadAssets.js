@@ -1,61 +1,20 @@
-export async function preloadImages(
-  assets,
-  onProgress = () => {}
-) {
+export async function preloadImages(images, onProgress) {
+
+  if (!images || images.length === 0) {
+
+    onProgress(100);
+
+    return;
+
+  }
 
   let loaded = 0;
 
-  const total = assets.length;
+  const total = images.length;
 
-  const promises = assets.map((src) => {
+  const promises = images.map((src) => {
 
     return new Promise((resolve) => {
-
-      const extension =
-        src.split(".").pop();
-
-      // VIDEO
-
-      if (
-        extension === "mp4"
-      ) {
-
-        const video =
-          document.createElement("video");
-
-        video.preload = "auto";
-
-        video.onloadeddata = () => {
-
-          loaded++;
-
-          onProgress(
-            (loaded / total) * 100
-          );
-
-          resolve();
-
-        };
-
-        video.onerror = () => {
-
-          loaded++;
-
-          onProgress(
-            (loaded / total) * 100
-          );
-
-          resolve();
-
-        };
-
-        video.src = src;
-
-        return;
-
-      }
-
-      // IMAGE
 
       const img = new Image();
 
@@ -64,7 +23,7 @@ export async function preloadImages(
         loaded++;
 
         onProgress(
-          (loaded / total) * 100
+          Math.round((loaded / total) * 100)
         );
 
         resolve();
@@ -76,7 +35,7 @@ export async function preloadImages(
         loaded++;
 
         onProgress(
-          (loaded / total) * 100
+          Math.round((loaded / total) * 100)
         );
 
         resolve();
@@ -90,5 +49,7 @@ export async function preloadImages(
   });
 
   await Promise.all(promises);
+
+  onProgress(100);
 
 }
