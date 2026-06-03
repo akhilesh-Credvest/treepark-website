@@ -16,6 +16,7 @@ export default function Tour360Viewer() {
 
   const [currentPano, setCurrentPano] = useState(0);
   const [ready, setReady] = useState(false);
+  const [overlayVisible, setOverlayVisible] = useState(true); // NEW
 
   // Core Viewer Engine Initialization Mount Loop
   useEffect(() => {
@@ -37,16 +38,15 @@ export default function Tour360Viewer() {
           navbar: [],
           mousewheel: true,
           defaultYaw: 0,
-          // CRITICAL PRODUCTION FIX: Tells WebGL engine canvas to securely allow cross-origin assets
-          // panoramaOptions: {
-          //   cors: "anonymous", 
-          // },
         });
 
         viewerRef.current = psvViewer;
 
         psvViewer.addEventListener("ready", () => {
-          if (!destroyed) setReady(true);
+          if (!destroyed) {
+            setReady(true);
+            setTimeout(() => setOverlayVisible(false), 200); // short delay then fade NEW
+          }
         });
 
       } catch (err) {
@@ -57,11 +57,7 @@ export default function Tour360Viewer() {
     return () => {
       destroyed = true;
       if (viewerRef.current) {
-        try {
-          viewerRef.current.destroy();
-        } catch (e) {
-          console.warn("Error destroying instance:", e);
-        }
+        try { viewerRef.current.destroy(); } catch (e) { console.warn(e); }
         viewerRef.current = null;
       }
     };
@@ -70,16 +66,9 @@ export default function Tour360Viewer() {
   // Safe Panorama Texture Swap Router
   useEffect(() => {
     if (!viewerRef.current || !ready) return;
-
-    const targetTexture = panoramas[currentPano];
-
-    viewerRef.current.setPanorama(targetTexture, {
-      transition: {
-        duration: 600, // Slightly reduced for snappier performance updates
-      },
-    }).catch((err) => {
-      console.error("Failed to transition panorama layout texture:", err);
-    });
+    viewerRef.current.setPanorama(panoramas[currentPano], {
+      transition: { duration: 600 },
+    }).catch((err) => console.error("Failed to transition panorama layout texture:", err));
   }, [currentPano, ready]);
 
   // Clean Non-blocking Background Assets Queue Downloader
@@ -90,26 +79,12 @@ export default function Tour360Viewer() {
     let index = 0;
     const loadNext = () => {
       if (index >= panoramas.length) return;
-      if (imageCache.current[index]) {
-        index++;
-        loadNext();
-        return;
-      }
-
+      if (imageCache.current[index]) { index++; loadNext(); return; }
       const img = new Image();
       img.src = panoramas[index];
-      img.onload = () => {
-        imageCache.current[index] = img;
-        index++;
-        setTimeout(loadNext, 40);
-      };
-      img.onerror = () => {
-        index++;
-        loadNext();
-      };
+      img.onload = () => { imageCache.current[index] = img; index++; setTimeout(loadNext, 40); };
+      img.onerror = () => { index++; loadNext(); };
     };
-
-    // Delay start slightly to allow the primary main WebGL view to initialize flawlessly first
     const t = setTimeout(loadNext, 1000);
     return () => clearTimeout(t);
   }, []);
@@ -119,9 +94,57 @@ export default function Tour360Viewer() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
-      
+
       {/* Primary WebGL Core Anchor Target Frame */}
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* ── Loading Overlay ── NEW */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 50,
+          background: "#0b1719",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 24,
+          pointerEvents: overlayVisible ? "auto" : "none",
+          opacity: overlayVisible ? 1 : 0,
+          transition: "opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        {/* Spinning ring */}
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            border: "1px solid rgba(222,196,148,0.15)",
+            borderTop: "1px solid #DEC494",
+            animation: "spin360 1.2s linear infinite",
+          }}
+        />
+        <p
+          style={{
+            fontFamily: "'Raleway', sans-serif",
+            fontSize: 10,
+            fontWeight: 300,
+            letterSpacing: "0.5em",
+            textTransform: "uppercase",
+            color: "rgba(222,196,148,0.5)",
+            animation: "pulse360 2s ease-in-out infinite",
+          }}
+        >
+          Loading View
+        </p>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap');
+          @keyframes spin360 { to { transform: rotate(360deg); } }
+          @keyframes pulse360 { 0%,100%{opacity:.4} 50%{opacity:.9} }
+        `}</style>
+      </div>
 
       {/* Counter Label UI */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-baseline gap-1.5 px-5 py-2 rounded-full bg-[#1a3438]/80 backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_4px_20px_rgba(0,0,0,0.3)] z-40">

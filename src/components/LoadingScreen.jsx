@@ -27,18 +27,20 @@ export default function LoadingScreen({
         <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#DEC494]/20 rounded-bl" />
         <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#DEC494]/20 rounded-br" />
 
-        {/* Logo Container */}
-        <div className="relative mb-8 p-6 rounded-[24px] border border-[#DEC494]/20 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.4)] transition-transform duration-500">
-          <Image
-            src="/NTP_OS.png"
-            alt="Logo"
-            draggable={false}
-            width={160}
-            height={160}
-            className="w-auto h-[120px] md:h-[160px] object-contain relative z-10"
-            priority 
-          />
-        </div>
+
+      {/* Logo Container */}
+      <div className="relative mb-0 p-6 transition-transform duration-500 w-full flex justify-center">
+        <Image
+          src="/NTP_OS.png"
+          alt="Logo"
+          draggable={false}
+          width={160}
+          height={160}
+          className="w-auto h-[120px] md:h-[160px] object-contain relative z-10"
+          style={{ filter: "brightness(0) saturate(100%) invert(85%) sepia(30%) saturate(400%) hue-rotate(5deg)" }}
+          priority 
+        />
+      </div>
 
         {!ready ? (
           <div className="w-full flex flex-col items-center">

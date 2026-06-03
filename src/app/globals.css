@@ -142,3 +142,31 @@
   }
 
 }
+/* ── Global Responsiveness & Scaling Overrides ── */
+
+/* Ensure sliders have comfortable touch targets on mobile and tablets */
+@media (max-width: 1024px) {
+  .luxury-slider::-webkit-slider-thumb {
+    width: 32px;
+    height: 32px;
+    margin-top: -14px; /* Maintain vertical alignment offset centering */
+  }
+  .luxury-slider::-moz-range-thumb {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Base utility forcing standard containers to respect modern mobile browser dynamic viewports */
+.h-screen-fallback {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height prevents mobile address bar clipping issues */
+}
+
+/* Landscape orientation optimization for compact smartphones */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-landscape-shrink {
+    transform: scale(0.85);
+    transform-origin: bottom center;
+  }
+}

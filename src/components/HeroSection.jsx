@@ -11,7 +11,7 @@ import HighlightsViewer from "./HighlightsViewer";
 import Logo from "./Logo";
 import LoadingScreen from "./LoadingScreen";
 
-// Import your unified memory warehouse references
+// Import your memory warehouse layer
 import { sequenceCache, dayNightCache, AmenitiesCaches, globalAppCache } from "../utils/imageCache";
 
 export default function HeroSection() {
@@ -31,7 +31,6 @@ export default function HeroSection() {
       { key: "lakeview", offset: 22 }
     ];
 
-    // Explicitly mapping your actual structural workspace paths
     const amenityFiles = [
       "/Amenities/Clubhouse.webp",
       "/Amenities/Swimming Pool.webp",
@@ -42,14 +41,21 @@ export default function HeroSection() {
       "/Amenities/Orchard.webp"
     ];
 
+    // Array of your 3 specific high-resolution project files
+    const standaloneHighResFiles = [
+      { path: "/location/Location_result.webp", type: "location" },
+      { path: "/panoramas/1_result.webp", type: "panoramas" },
+      { path: "/masterplan/HighresScreenshot00060_result.webp", type: "masterplan" }
+    ];
+
     const totalDayNightAssets = dayNightLocations.length * totalDayNightFrames;
     
-    // Grand Total Balance Math: 72 (seq) + 108 (daynight) + 7 (amenities) + 1 (map background) + 1 (video stream) = 189 items
-    const criticalTotal = totalSeqFrames + totalDayNightAssets + amenityFiles.length + 1 + 1;
+    // Grand Total Math: 72 (seq) + 108 (daynight) + 7 (amenities) + 3 (specific files) + 1 (video blob) = 191 items
+    const criticalTotal = totalSeqFrames + totalDayNightAssets + amenityFiles.length + standaloneHighResFiles.length + 1;
     
     let processedCount = 0;
 
-    // Create a tiny off-screen canvas rendering engine context to force GPU texture warming
+    // Offscreen rendering pipeline to pre-warm textures on the GPU
     const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = 16;
     offscreenCanvas.height = 16;
@@ -96,7 +102,7 @@ export default function HeroSection() {
       img.onerror = trackLoaderProgress;
     }
 
-    // ── 2. PRELOAD DAY-NIGHT MATRIX MATRICES ──
+    // ── 2. PRELOAD DAY-NIGHT MATRIX VIEWS ──
     dayNightLocations.forEach((loc) => {
       for (let f = 1; f <= totalDayNightFrames; f++) {
         const img = new Image();
@@ -110,7 +116,7 @@ export default function HeroSection() {
       }
     });
 
-    // ── 3. PRELOAD AMENITIES PANORAMAS (FIXED SYSTEM) ──
+    // ── 3. PRELOAD AMENITIES PANORAMAS ──
     amenityFiles.forEach((fileSrc, index) => {
       const img = new Image();
       img.src = fileSrc;
@@ -124,17 +130,23 @@ export default function HeroSection() {
       };
     });
 
-    // ── 4. PRELOAD LOCATION BASE PLAN MAP GRAPHIC (FIXED SYSTEM) ──
-    const mapImg = new Image();
-    mapImg.src = "/location/Location_result.webp";
-    mapImg.onload = () => {
-      globalAppCache.location.baseMap = mapImg;
-      warmupTexture(mapImg);
-    };
-    mapImg.onerror = () => {
-      console.error("Failed loading map plan baseline resource path");
-      trackLoaderProgress();
-    };
+    // ── 4. PRELOAD YOUR 3 SPECIFIC STANDALONE TARGET IMAGES ──
+    standaloneHighResFiles.forEach((target) => {
+      const img = new Image();
+      img.src = target.path;
+      img.onload = () => {
+        // Safe global context routing assignments based on target key
+        if (target.type === "location") globalAppCache.location.baseMap = img;
+        if (target.type === "panoramas") globalAppCache.panoramas.tourBase = img;
+        if (target.type === "masterplan") globalAppCache.masterplan.baseMap = img;
+        
+        warmupTexture(img);
+      };
+      img.onerror = () => {
+        console.error(`Failed to cache structural layout element at: ${target.path}`);
+        trackLoaderProgress();
+      };
+    });
 
     // ── 5. PRELOAD HIGH-PERFORMANCE VIDEO BLOB STREAM ──
     fetch("/videos/highlights.mp4")

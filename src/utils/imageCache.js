@@ -14,10 +14,16 @@ export const AmenitiesCaches = new Array(7).fill(null);
 
 export const globalAppCache = {
   location: {
-    baseMap: null, // Holds the pre-decoded layout background image element
+    baseMap: null,       // Map for LocationViewer (/location/Location_result.webp)
+  },
+  masterplan: {
+    baseMap: null,       // Map for AmenitiesViewer (/masterplan/HighresScreenshot00060_result.webp)
+  },
+  panoramas: {
+    tourBase: null,      // Static panoramic entry frame (/panoramas/1_result.webp)
   },
   highlights: {
-    videoBlobUrl: null, // Holds the raw video binary memory buffer bridge URL
+    videoBlobUrl: null,
     isReady: false,
   }
 };

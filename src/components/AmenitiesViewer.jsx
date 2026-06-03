@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { AmenitiesCaches } from "../utils/imageCache";
+import { AmenitiesCaches, globalAppCache } from "../utils/imageCache";
 
 const amenities = [
   { id: 1, name: "Club House",         image: "/Amenities/Clubhouse.webp",       x: 58.5,  y: 12 },
@@ -22,16 +22,7 @@ export default function AmenitiesViewer() {
 
   const selected = selectedIndex !== null ? amenities[selectedIndex] : null;
 
-  // Sync background thread cache arrays locally
-  useEffect(() => {
-    amenities.forEach((item, index) => {
-      if (!AmenitiesCaches[index]) {
-        const img = new Image();
-        img.src = item.image;
-        AmenitiesCaches[index] = img;
-      }
-    });
-  }, []);
+  const masterPlanBackgroundSrc = globalAppCache.masterplan.baseMap?.src || "/masterplan/HighresScreenshot00060_result.webp";
 
   useEffect(() => {
     if (selectedIndex !== null) return;
@@ -67,7 +58,6 @@ export default function AmenitiesViewer() {
     return () => window.removeEventListener("resize", handleResize);
   }, [selectedIndex]);
 
-  // Handle Photo Sphere mounting via cache buffers
   useEffect(() => {
     if (selectedIndex === null) {
       if (viewerRef.current) {
@@ -91,7 +81,6 @@ export default function AmenitiesViewer() {
 
         if (destroyed || !containerRef.current) return;
         
-        // INTERCEPT POINT: Bypass network fetching by pulling the preloaded instance
         const preloadedAsset = AmenitiesCaches[selectedIndex];
         const panoramaSource = preloadedAsset ? preloadedAsset.src : amenities[selectedIndex].image;
 
@@ -111,8 +100,7 @@ export default function AmenitiesViewer() {
           navbar: [],
           mousewheel: true,
           defaultYaw: 0,
-          loadingImg: null, // Clear built-in text fields to speed up layout transition
-          // panoramaOptions: { cors: "anonymous" },
+          loadingImg: null,
         });
       } catch (err) {
         console.error("PSV error:", err);
@@ -130,7 +118,7 @@ export default function AmenitiesViewer() {
         <div ref={mapRef} className="absolute inset-0 w-full h-full overflow-hidden">
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center pointer-events-none"
-            style={{ backgroundImage: "url('/masterplan/HighresScreenshot00060_result.webp')" }}
+            style={{ backgroundImage: `url('${masterPlanBackgroundSrc}')` }}
           />
 
           <div 
@@ -143,18 +131,30 @@ export default function AmenitiesViewer() {
             }}
           >
             {amenities.map((item, index) => (
-              <button
+              <div
                 key={item.id}
-                onClick={() => setSelectedIndex(index)}
                 style={{ 
                   left: `${item.x}%`, 
                   top: `${item.y}%`,
                   transform: "translate(-50%, -50%)"
                 }}
-                className="absolute pointer-events-auto w-11 h-11 rounded-full flex items-center justify-center text-xs tracking-widest backdrop-blur-md border transition-all duration-300 bg-[#1a3438]/85 text-[#DEC494] border-[#DEC494]/40 hover:bg-[#DEC494] hover:text-[#0b1719] hover:border-[#DEC494] hover:shadow-[0_0_30px_rgba(222,196,148,0.7)] hover:scale-110 z-30"
+                className="absolute pointer-events-auto z-30 flex flex-col items-center group"
               >
-                {String(item.id).padStart(2, "0")}
-              </button>
+                {/* Visual Connector Dot Pin */}
+                <button
+                  onClick={() => setSelectedIndex(index)}
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold tracking-widest backdrop-blur-md border transition-all duration-300 bg-[#084042]/90 text-[#DEC494] border-[#DEC494]/60 shadow-[0_0_15px_rgba(222,196,148,0.25)] group-hover:bg-[#DEC494] group-hover:text-[#0b1719] group-hover:border-[#DEC494] group-hover:shadow-[0_0_35px_rgba(222,196,148,0.8)] group-hover:scale-110 active:scale-95"
+                >
+                  {String(item.id).padStart(2, "0")}
+                </button>
+
+                {/* Text Label Displayed Below Button On Hover */}
+                <div className="absolute top-14 opacity-0 scale-95 translate-y-[-4px] pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 whitespace-nowrap z-40">
+                  <span className="px-3 py-1.5 rounded-lg text-[10px] font-medium tracking-widest bg-[#084042]/95 text-[#DEC494] border border-[#DEC494]/40 shadow-[0_4px_12px_rgba(0,0,0,0.5)] uppercase">
+                    {item.name}
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
         </div>
