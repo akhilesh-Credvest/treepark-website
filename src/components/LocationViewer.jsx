@@ -15,6 +15,7 @@ const locations = [
   {
     id: 2,
     name: "NPS OMR",
+    fullName: "NPS OMR",
     distance: "0.7 KM",
     x: "56%", y: "36%",
     route: [[53.6,29],[52.6,30.6],[54.9,31.4],[55.9,32],[56.6,34.1]],
