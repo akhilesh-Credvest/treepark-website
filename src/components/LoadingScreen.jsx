@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from 'next/image';
 
 export default function LoadingScreen({
@@ -7,8 +8,39 @@ export default function LoadingScreen({
   onExplore,
   ready,
 }) {
-  // Clamp progress to a safe range (0-100)
-  const safeProgress = Math.max(0, Math.min(100, progress));
+  const [smoothProgress, setSmoothProgress] = useState(0);
+
+  // Smooth Interpolation Engine to eliminate rapid freezes or sudden cache skips
+  useEffect(() => {
+    let animationFrameId;
+    const targetProgress = Math.max(0, Math.min(100, progress));
+
+    const updateProgress = () => {
+      setSmoothProgress((prev) => {
+        if (prev >= targetProgress) {
+          return targetProgress;
+        }
+
+        // Fast roll adjustments for fast disk caches vs slower network responses
+        const delta = targetProgress - prev;
+        const step = delta > 20 ? 2.0 : 0.6;
+        
+        const nextValue = prev + step;
+        if (nextValue >= targetProgress) {
+          return targetProgress;
+        }
+
+        animationFrameId = requestAnimationFrame(updateProgress);
+        return nextValue;
+      });
+    };
+
+    animationFrameId = requestAnimationFrame(updateProgress);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [progress]);
+
+  // Keep progress value synced up with ready state overrides
+  const displayProgress = ready ? 100 : smoothProgress;
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#0b1719] flex items-center justify-center font-sans antialiased selection:bg-[#DEC494]/20 select-none">
@@ -27,20 +59,20 @@ export default function LoadingScreen({
         <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#DEC494]/20 rounded-bl" />
         <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#DEC494]/20 rounded-br" />
 
-
-      {/* Logo Container */}
-      <div className="relative mb-0 p-6 transition-transform duration-500 w-full flex justify-center">
-        <Image
-          src="/NTP_OS.png"
-          alt="Logo"
-          draggable={false}
-          width={160}
-          height={160}
-          className="w-auto h-[120px] md:h-[160px] object-contain relative z-10"
-          style={{ filter: "brightness(0) saturate(100%) invert(85%) sepia(30%) saturate(400%) hue-rotate(5deg)" }}
-          priority 
-        />
-      </div>
+        {/* Logo Container */}
+        <div className="relative mb-0 p-6 transition-transform duration-500 w-full flex justify-center">
+          <Image
+            src="/NTP_OS.png"
+            alt="Logo"
+            draggable={false}
+            width={160}
+            height={160}
+            className="w-auto h-[120px] md:h-[160px] object-contain relative z-10"
+            style={{ filter: "brightness(0) saturate(100%) invert(85%) sepia(30%) saturate(400%) hue-rotate(5deg)" }}
+            priority
+            loading="eager"
+          />
+        </div>
 
         {!ready ? (
           <div className="w-full flex flex-col items-center">
@@ -54,7 +86,7 @@ export default function LoadingScreen({
               <div
                 className="absolute left-0 top-0 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(222,196,148,0.6)]"
                 style={{
-                  width: `${safeProgress}%`,
+                  width: `${displayProgress}%`,
                   background: "linear-gradient(90deg, #b89655 0%, #DEC494 50%, #f7e9ce 100%)",
                 }}
               />
@@ -62,7 +94,7 @@ export default function LoadingScreen({
 
             {/* Percentage Display */}
             <div className="mt-6 text-[#DEC494] text-4xl font-extralight tracking-tight tabular-nums">
-              {Math.floor(safeProgress)}<span className="text-xl ml-0.5 opacity-60">%</span>
+              {Math.floor(displayProgress)}<span className="text-xl ml-0.5 opacity-60">%</span>
             </div>
 
             {/* Loading Action Text */}
