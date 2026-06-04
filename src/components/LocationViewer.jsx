@@ -66,6 +66,23 @@ export default function LocationViewer() {
   const [selected, setSelected] = useState(null);
   const [displayRoute, setDisplayRoute] = useState([]);
   const [helperMode] = useState(false); // Cleaned layout lock tracking
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // Responsive Device Orientation Detection Lifecycle
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkOrientation = () => {
+      // Determines if viewport aspect-ratio is currently locked in portrait configuration
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+
+    // Initial calculation on component mounting
+    checkOrientation();
+
+    window.addEventListener("resize", checkOrientation);
+    return () => window.removeEventListener("resize", checkOrientation);
+  }, []);
 
   // Optimized fallback calculation system
   const mapBackgroundSrc = globalAppCache.location.baseMap?.src || "/location/Location_result.webp";
@@ -97,6 +114,7 @@ export default function LocationViewer() {
           draggable={false}
         />
       </div>
+      
 
       {/* Tree Park origin pin */}
       <div className={`absolute z-20 ${helperMode ? "pointer-events-none" : ""}`} style={{ left: "53.5%", top: "28%", transform: "translate(-50%,-50%)" }}>
@@ -130,8 +148,8 @@ export default function LocationViewer() {
           />
         </svg>
       )}
+      
 
-      {/* Location markers */}
       {locations.map((item) => {
         const isActive = selected?.id === item.id;
         return (
@@ -141,12 +159,13 @@ export default function LocationViewer() {
             style={{ left: item.x, top: item.y, transform: "translate(-50%,-50%)" }}
             className={`absolute z-30 flex flex-col items-center group transition-opacity duration-300 ${helperMode ? "pointer-events-none opacity-40" : ""}`}
           >
-            <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+            <div className={`w-3 h-3 lg:w-4 lg:h-4 rounded-full border-2 transition-all duration-300 ${
               isActive
                 ? "bg-[#DEC494] border-[#DEC494] scale-125 shadow-[0_0_14px_rgba(222,196,148,0.9)]"
                 : "bg-[#DEC494]/50 border-[#DEC494]/60 group-hover:bg-[#DEC494] group-hover:scale-110"
             }`} />
-            <div className={`mt-1.5 px-3 py-1 rounded-md backdrop-blur-md border text-[10px] whitespace-nowrap w-max max-w-none tracking-wide transition-all duration-300 ${
+            {/* Label — desktop only, mobile uses bottom-right card */}
+            <div className={`hidden lg:block mt-1.5 px-3 py-1 rounded-md backdrop-blur-md border text-[10px] whitespace-nowrap w-max tracking-wide transition-all duration-300 ${
               isActive
                 ? "bg-[#1a3438]/95 border-[#DEC494]/50 text-[#DEC494]"
                 : "bg-[#1a3438]/70 border-[#DEC494]/15 text-[#DEC494]/70 group-hover:text-[#DEC494] group-hover:border-[#DEC494]/40"
@@ -159,17 +178,34 @@ export default function LocationViewer() {
 
       {/* Info card */}
       {selected && (
-        <div className="absolute bottom-15 left-350 z-40 flex items-center gap-6 px-8 py-4 rounded-2xl backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-fade-in"
-          style={{ background: "rgba(26,52,56,0.85)" }}>
-          <div className="flex flex-col">
-            <span className="text-[#DEC494]/50 text-[9px] tracking-[0.2em] mb-0.5">DESTINATION</span>
-            <span className="text-[#DEC494] text-base tracking-wide">{selected.fullName}</span>
+        <div
+          className="absolute bottom-4 right-4 z-40 flex items-center gap-3 px-4 py-3 rounded-2xl backdrop-blur-2xl border border-[#DEC494]/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-w-[60vw] lg:max-w-none lg:bottom-8 lg:right-8 lg:gap-6 lg:px-8 lg:py-4"
+          style={{ background: "rgba(26,52,56,0.92)" }}
+        >
+          <div className="flex flex-col min-w-0">
+            <span className="text-[#DEC494]/50 text-[8px] lg:text-[9px] tracking-[0.2em] mb-0.5">DESTINATION</span>
+            <span className="text-[#DEC494] text-xs lg:text-base tracking-wide truncate">{selected.fullName}</span>
           </div>
-          <div className="w-px h-8 bg-[#DEC494]/15" />
-          <div className="flex flex-col">
-            <span className="text-[#DEC494]/50 text-[9px] tracking-[0.2em] mb-0.5">DISTANCE</span>
-            <span className="text-[#DEC494] text-base font-medium">{selected.distance}</span>
+          <div className="w-px h-6 lg:h-8 bg-[#DEC494]/15 flex-shrink-0" />
+          <div className="flex flex-col flex-shrink-0">
+            <span className="text-[#DEC494]/50 text-[8px] lg:text-[9px] tracking-[0.2em] mb-0.5">DISTANCE</span>
+            <span className="text-[#DEC494] text-xs lg:text-base font-medium">{selected.distance}</span>
           </div>
+        </div>
+      )}
+
+      {/* ── Portrait Orientation Adaptive Blocking Modal Layer ── */}
+      {isPortrait && (
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-[#0b1719]/95 backdrop-blur-xl text-center select-none">
+          <div className="w-14 h-14 mb-5 rounded-2xl flex items-center justify-center border border-[#DEC494]/30 bg-[#DEC494]/10 animate-pulse">
+            <svg className="w-7 h-7 text-[#DEC494]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-[#DEC494] tracking-widest text-sm font-light uppercase mb-1">Landscape Orientation Suggested</h3>
+          <p className="text-[#DEC494]/60 text-xs max-w-xs leading-relaxed">
+            Please flip your phone horizontally to interactive-scrub through this 360 sequence comfortably.
+          </p>
         </div>
       )}
     </div>

@@ -19,11 +19,54 @@ export default function AmenitiesViewer() {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, left: 0, top: 0 });
   const mapRef = useRef(null);
+  const [isPortrait, setIsPortrait] = useState(false);
 
   const selected = selectedIndex !== null ? amenities[selectedIndex] : null;
 
   const masterPlanBackgroundSrc = globalAppCache.masterplan.baseMap?.src || "/masterplan/HighresScreenshot00060_result.webp";
 
+  // Responsive Device Orientation & Layout Calculation Lifecycle
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window === "undefined") return;
+
+      // Track aspect ratio updates to switch layout context
+      setIsPortrait(window.innerHeight > window.innerWidth);
+
+      if (selectedIndex !== null || !mapRef.current) return;
+      
+      const vW = window.innerWidth;
+      const vH = window.innerHeight;
+      const imgAspect = 16 / 9;
+      const screenAspect = vW / vH;
+
+      let renderW, renderH;
+
+      // Always contain fully within screen — no cropping
+      if (screenAspect > imgAspect) {
+        // Screen wider than image: fit by height
+        renderH = vH;
+        renderW = vH * imgAspect;
+      } else {
+        // Screen taller than image: fit by width
+        renderW = vW;
+        renderH = vW / imgAspect;
+      }
+
+      setDimensions({
+        width: renderW,
+        height: renderH,
+        left: (vW - renderW) / 2,
+        top: (vH - renderH) / 2,
+      });
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [selectedIndex]);
+
+  // Responsive Device Orientation Detection Lifecycle
   useEffect(() => {
     if (selectedIndex !== null) return;
 
@@ -130,32 +173,31 @@ export default function AmenitiesViewer() {
               top: `${dimensions.top}px`,
             }}
           >
-            {amenities.map((item, index) => (
-              <div
-                key={item.id}
-                style={{ 
-                  left: `${item.x}%`, 
-                  top: `${item.y}%`,
-                  transform: "translate(-50%, -50%)"
-                }}
-                className="absolute pointer-events-auto z-30 flex flex-col items-center group"
+          {amenities.map((item, index) => (
+            <div
+              key={item.id}
+              style={{ 
+                left: `${item.x}%`, 
+                top: `${item.y}%`,
+                transform: "translate(-50%, -50%)"
+              }}
+              className="absolute pointer-events-auto z-30 flex flex-col items-center group"
+            >
+              <button
+                onClick={() => setSelectedIndex(index)}
+                className="w-5 h-5 lg:w-12 lg:h-12 rounded-full flex items-center justify-center text-[8px] lg:text-xs font-bold tracking-widest backdrop-blur-md border transition-all duration-300 bg-[#084042]/90 text-[#DEC494] border-[#DEC494]/60 shadow-[0_0_15px_rgba(222,196,148,0.25)] group-hover:bg-[#DEC494] group-hover:text-[#0b1719] group-hover:border-[#DEC494] group-hover:shadow-[0_0_35px_rgba(222,196,148,0.8)] group-hover:scale-110 active:scale-95"
               >
-                {/* Visual Connector Dot Pin */}
-                <button
-                  onClick={() => setSelectedIndex(index)}
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold tracking-widest backdrop-blur-md border transition-all duration-300 bg-[#084042]/90 text-[#DEC494] border-[#DEC494]/60 shadow-[0_0_15px_rgba(222,196,148,0.25)] group-hover:bg-[#DEC494] group-hover:text-[#0b1719] group-hover:border-[#DEC494] group-hover:shadow-[0_0_35px_rgba(222,196,148,0.8)] group-hover:scale-110 active:scale-95"
-                >
-                  {String(item.id).padStart(2, "0")}
-                </button>
+                {String(item.id).padStart(2, "0")}
+              </button>
 
-                {/* Text Label Displayed Below Button On Hover */}
-                <div className="absolute top-14 opacity-0 scale-95 translate-y-[-4px] pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 whitespace-nowrap z-40">
-                  <span className="px-3 py-1.5 rounded-lg text-[10px] font-medium tracking-widest bg-[#084042]/95 text-[#DEC494] border border-[#DEC494]/40 shadow-[0_4px_12px_rgba(0,0,0,0.5)] uppercase">
-                    {item.name}
-                  </span>
-                </div>
+              {/* Tooltip — above on mobile, below on desktop */}
+              <div className="absolute bottom-9 lg:bottom-auto lg:top-14 opacity-0 scale-95 pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap z-40">
+                <span className="px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-medium tracking-widest bg-[#084042]/95 text-[#DEC494] border border-[#DEC494]/40 shadow-[0_4px_12px_rgba(0,0,0,0.5)] uppercase">
+                  {item.name}
+                </span>
               </div>
-            ))}
+            </div>
+          ))}
           </div>
         </div>
       )}
@@ -163,22 +205,48 @@ export default function AmenitiesViewer() {
       {/* ── PANORAMA VIEW ── */}
       {selectedIndex !== null && (
         <>
-          <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#0b1719]" />
+            <div
+      ref={containerRef}
+      className="absolute bg-[#0b1719]"
+      style={{
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        maxHeight: "100svh",
+      }}
+    />
 
-          <div className="absolute bottom-8 left-8 z-50 flex flex-col pointer-events-none">
-            <span className="text-[#DEC494] text-xl tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-light">
-              {selected?.name}
-            </span>
-          </div>
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 lg:bottom-8 lg:left-8 lg:translate-x-0 z-50 flex flex-col items-center lg:items-start pointer-events-none">
+        <span className="text-[#DEC494]/50 text-[8px] tracking-[0.2em] uppercase mb-0.5">Now Viewing</span>
+        <span className="text-[#DEC494] text-xs lg:text-xl tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-light">
+          {selected?.name}
+        </span>
+      </div>
 
-          <button
-            onClick={() => setSelectedIndex(null)}
-            className="absolute top-6 right-6 z-50 flex items-center gap-2 px-5 py-2.5 rounded-xl backdrop-blur-2xl border border-[#DEC494]/20 text-[#DEC494] text-sm tracking-widest hover:bg-[#DEC494]/20 transition-all duration-300"
-            style={{ background: "rgba(26,52,56,0.8)" }}
-          >
-            Back &rarr;
-          </button>
+  <button
+    onClick={() => setSelectedIndex(null)}
+    className="absolute bottom-4 left-4 lg:top-6 lg:right-6 lg:bottom-auto lg:left-auto z-50 flex items-center gap-1.5 px-3 py-1.5 lg:px-5 lg:py-2.5 rounded-xl backdrop-blur-2xl border border-[#DEC494]/20 text-[#DEC494] text-[10px] lg:text-sm tracking-widest hover:bg-[#DEC494]/20 transition-all duration-300"
+    style={{ background: "rgba(26,52,56,0.8)" }}
+  >
+    <span className="lg:hidden">&larr; Back</span>
+    <span className="hidden lg:inline">Back &rarr;</span>
+  </button>
         </>
+      )}
+      {/* ── Portrait Orientation Adaptive Blocking Modal Layer ── */}
+      {isPortrait && (
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-[#0b1719]/95 backdrop-blur-xl text-center select-none">
+          <div className="w-14 h-14 mb-5 rounded-2xl flex items-center justify-center border border-[#DEC494]/30 bg-[#DEC494]/10 animate-pulse">
+            <svg className="w-7 h-7 text-[#DEC494]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-[#DEC494] tracking-widest text-sm font-light uppercase mb-1">Landscape Orientation Suggested</h3>
+          <p className="text-[#DEC494]/60 text-xs max-w-xs leading-relaxed">
+            Please flip your phone horizontally to interactive-scrub through this 360 sequence comfortably.
+          </p>
+        </div>
       )}
 
     </div>

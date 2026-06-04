@@ -22,8 +22,8 @@ export default function SideMenu({ activeMenu, setActiveMenu }) {
   const [active, setActive] = useState(0);
   const [iframeUrl, setIframeUrl] = useState(null);
   const [menuVisible, setMenuVisible] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Controls responsive mobile sliding tray
 
-  // Sync index highlights if components modify menus externally
   useEffect(() => {
     const idx = menuItems.findIndex(item => item.key === activeMenu);
     if (idx !== -1 && !iframeUrl) {
@@ -52,7 +52,7 @@ export default function SideMenu({ activeMenu, setActiveMenu }) {
           {/* Close Action Trigger */}
           <button
             onClick={closeIframe}
-            className="absolute bottom-6 left-8 z-[70] w-10 h-10 rounded-xl flex items-center justify-center bg-[#1a3438]/90 backdrop-blur-2xl border border-[#DEC494]/25 text-[#DEC494] hover:bg-[#DEC494]/20 hover:border-[#DEC494]/50 transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+            className="absolute bottom-6 left-6 sm:left-8 z-[70] w-10 h-10 rounded-xl flex items-center justify-center bg-[#1a3438]/90 backdrop-blur-2xl border border-[#DEC494]/25 text-[#DEC494] hover:bg-[#DEC494]/20 hover:border-[#DEC494]/50 transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
             aria-label="Close Interior view"
           >
             <X size={18} strokeWidth={2} />
@@ -64,59 +64,59 @@ export default function SideMenu({ activeMenu, setActiveMenu }) {
       {iframeUrl && !menuVisible && (
         <button
           onClick={() => setMenuVisible(true)}
-          className="absolute bottom-6 left-24 z-[70] w-10 h-10 rounded-xl flex items-center justify-center bg-[#1a3438]/90 backdrop-blur-2xl border border-[#DEC494]/25 text-[#DEC494] hover:bg-[#DEC494]/20 transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+          className="absolute bottom-6 left-20 sm:left-24 z-[70] w-10 h-10 rounded-xl flex items-center justify-center bg-[#1a3438]/90 backdrop-blur-2xl border border-[#DEC494]/25 text-[#DEC494] hover:bg-[#DEC494]/20 transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
           aria-label="Show menu"
         >
           <Menu size={18} />
         </button>
       )}
 
-      {/* Side Menu Layout Container Panel */}
-      {menuVisible && (
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 z-[70] select-none">
-          <div
-            className="flex flex-col gap-1.5 p-2.5 rounded-[20px] backdrop-blur-2xl border border-[#DEC494]/18 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-300"
-            style={{ background: "rgba(26,52,56,0.75)" }}
+      {/* Top Right Mobile Floating Navigation Bar - Toggle Control Panel */}
+      {menuVisible && !iframeUrl && (
+        <div className="absolute top-4 right-2 sm:top-2 sm:right-2 z-[80] lg:hidden">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className={`w-8 h-8 rounded-xl flex items-center justify-center bg-[#1a3438]/90 backdrop-blur-2xl border transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.4)] ${
+              mobileMenuOpen 
+                ? "border-[#DEC494]/50 text-[#DEC494] scale-95" 
+                : "border-[#DEC494]/20 text-[#DEC494]/80"
+            }`}
+            aria-label="Toggle menu Navigation"
           >
-            {/* Conditional Sub-Menu Controller Display Row */}
-            {iframeUrl && (
-              <div className="flex justify-center mb-1">
-                <button
-                  onClick={() => setMenuVisible(false)}
-                  className="w-8 h-6 rounded-lg flex items-center justify-center text-[#DEC494]/40 hover:text-[#DEC494] hover:bg-[#DEC494]/10 transition-all duration-200"
-                  aria-label="Hide menu"
-                  title="Hide menu"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            )}
+            {mobileMenuOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}
+          </button>
+        </div>
+      )}
 
+      {/* Side Menu Layout Container Panel - Fully Responsive Desktop vs Mobile */}
+      {menuVisible && (
+        <div 
+          className={`absolute left-1/2 -translate-x-1/2 lg:bottom-auto lg:left-auto lg:right-8 lg:top-1/2 lg:-translate-y-1/2 z-[70] select-none w-[92vw] max-w-[480px] lg:w-auto transition-all duration-500 ease-out ${
+            mobileMenuOpen 
+              ? "bottom-4 opacity-100 pointer-events-auto" 
+              : "bottom-0 opacity-0 pointer-events-none lg:bottom-auto lg:opacity-100 lg:pointer-events-auto"
+          }`}
+        >
+          <div className="flex flex-row lg:flex-col justify-around lg:justify-start gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-2xl sm:rounded-3xl bg-[#1a3438]/95 lg:bg-[#1a3438]/80 backdrop-blur-2xl border border-[#DEC494]/20 lg:border-[#DEC494]/15 shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-x-auto no-scrollbar">
             {menuItems.map((item, index) => {
               const Icon = item.icon;
-              const isActive = active === index && ((item.url && iframeUrl) || (!item.url && !iframeUrl));
+              const isActive = active === index;
 
               return (
-                <div key={index}>
-                  <div className="relative group flex items-center">
-
-                    {/* Active Navigation Pip */}
-                    <div
-                      className="absolute -left-[14px] top-1/2 -translate-y-1/2 w-1 rounded-full bg-[#DEC494] transition-all duration-300"
-                      style={{ height: isActive ? "28px" : "0px", opacity: isActive ? 1 : 0 }}
-                    />
-
-                    {/* Tooltip Label Overlay */}
-                    <div className="absolute right-[calc(100%+18px)] top-1/2 -translate-y-1/2 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none z-50">
-                      <div className="px-4 py-2 rounded-xl bg-[#1a3438]/92 backdrop-blur-2xl border border-[#DEC494]/20 text-[#DEC494] text-xs tracking-[0.14em] whitespace-nowrap shadow-xl">
+                <div key={item.title} className="flex flex-row lg:flex-col items-center flex-shrink-0">
+                  <div className="relative group flex items-center justify-center">
+                    {/* Hover Title Tooltip - Adjusted position for mobile layout */}
+                    <div className="absolute bottom-14 lg:bottom-auto lg:right-16 opacity-0 scale-95 pointer-events-none transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap z-50 hidden sm:block">
+                      <div className="px-3 py-1.5 rounded-lg text-[10px] font-medium tracking-widest bg-[#0b1719]/95 text-[#DEC494] border border-[#DEC494]/30 shadow-xl uppercase">
                         {item.title}
                       </div>
                     </div>
 
-                    {/* Navigation Click Button Item */}
+                    {/* Navigation Item Trigger */}
                     <button
                       onClick={() => {
                         setActive(index);
+                        setMobileMenuOpen(false); // Close sliding tray automatically after a selection
                         if (item.url) {
                           setIframeUrl(item.url);
                           setMenuVisible(false);
@@ -127,18 +127,18 @@ export default function SideMenu({ activeMenu, setActiveMenu }) {
                         }
                       }}
                       aria-label={item.title}
-                      className={`w-[52px] h-[52px] rounded-[13px] border flex items-center justify-center transition-all duration-200 hover:scale-105 ${
+                      className={`w-11 h-11 sm:w-12 sm:h-12 lg:w-[52px] lg:h-[52px] rounded-xl lg:rounded-[13px] border flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                         isActive
                           ? "bg-[#DEC494]/12 border-[#DEC494]/30 text-[#DEC494]"
                           : "bg-transparent border-transparent text-[#DEC494]/45 hover:bg-[#DEC494]/8 hover:border-[#DEC494]/18 hover:text-[#DEC494]/80"
                       }`}
                     >
-                      <Icon size={20} strokeWidth={1.6} />
+                      <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={1.6} />
                     </button>
                   </div>
 
                   {dividersAfter.has(index) && (
-                    <div className="h-px mx-2 my-2 bg-[#DEC494]/15" />
+                    <div className="hidden lg:block h-px w-8 mx-2 my-2 bg-[#DEC494]/15" />
                   )}
                 </div>
               );

@@ -51,7 +51,7 @@ export default function LoadingScreen({
       <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#1d3a40]/20 blur-[120px] pointer-events-none" />
 
       {/* Main Glassmorphic Container */}
-      <div className="relative w-[92vw] max-w-[540px] px-6 md:px-12 py-16 rounded-[40px] border border-white/[0.08] bg-white/[0.01] backdrop-blur-3xl shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex flex-col items-center transition-all duration-700 ease-out">
+      <div className="relative w-[92vw] max-w-[420px] md:max-w-[540px] px-6 md:px-12 py-10 md:py-16 rounded-[28px] md:rounded-[40px] border border-white/[0.08] bg-white/[0.01] backdrop-blur-3xl shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex flex-col items-center transition-all duration-700 ease-out">
         
         {/* Decorative corner accents */}
         <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#DEC494]/20 rounded-tl" />
@@ -60,14 +60,14 @@ export default function LoadingScreen({
         <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#DEC494]/20 rounded-br" />
 
         {/* Logo Container */}
-        <div className="relative mb-0 p-6 transition-transform duration-500 w-full flex justify-center">
+        <div className="relative mb-0 p-4 md:p-6 transition-transform duration-500 w-full flex justify-center">
           <Image
             src="/NTP_OS.png"
             alt="Logo"
             draggable={false}
             width={160}
             height={160}
-            className="w-auto h-[120px] md:h-[160px] object-contain relative z-10"
+            className="w-auto h-[80px] md:h-[120px] lg:h-[160px] object-contain relative z-10"
             style={{ filter: "brightness(0) saturate(100%) invert(85%) sepia(30%) saturate(400%) hue-rotate(5deg)" }}
             priority
             loading="eager"
@@ -93,8 +93,8 @@ export default function LoadingScreen({
             </div>
 
             {/* Percentage Display */}
-            <div className="mt-6 text-[#DEC494] text-4xl font-extralight tracking-tight tabular-nums">
-              {Math.floor(displayProgress)}<span className="text-xl ml-0.5 opacity-60">%</span>
+            <div className="mt-4 md:mt-6 text-[#DEC494] text-3xl md:text-4xl font-extralight tracking-tight tabular-nums">
+              {Math.floor(displayProgress)}<span className="text-lg md:text-xl ml-0.5 opacity-60">%</span>
             </div>
 
             {/* Loading Action Text */}
@@ -104,15 +104,12 @@ export default function LoadingScreen({
           </div>
         ) : (
           <div className="w-full flex flex-col items-center">
-            {/* Welcome Heading */}
-            <h1 className="text-[#DEC494] text-2xl md:text-3xl font-light tracking-[0.35em] uppercase text-center mb-8 leading-relaxed">
+            <h1 className="text-[#DEC494] text-xl md:text-2xl lg:text-3xl font-light tracking-[0.35em] uppercase text-center mb-6 md:mb-8 leading-relaxed">
               WELCOME
             </h1>
-
-            {/* Premium CTA Button */}
             <button
               onClick={onExplore}
-              className="group relative overflow-hidden px-14 py-4 rounded-full border border-[#DEC494]/40 bg-[#DEC494]/5 text-[#DEC494] text-[12px] font-medium tracking-[0.3em] uppercase transition-all duration-500 ease-out hover:border-[#DEC494] hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(222,196,148,0.25)]"
+              className="group relative overflow-hidden px-8 md:px-14 py-3 md:py-4 rounded-full border border-[#DEC494]/40 bg-[#DEC494]/5 text-[#DEC494] text-[11px] md:text-[12px] font-medium tracking-[0.3em] uppercase transition-all duration-500 ease-out hover:border-[#DEC494] hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(222,196,148,0.25)]"
             >
               <span className="absolute inset-0 translate-y-[101%] bg-[#DEC494] transition-transform duration-500 ease-out group-hover:translate-y-0" />
               <span className="relative z-10 block transition-colors duration-500 group-hover:text-[#0b1719]">
@@ -124,9 +121,9 @@ export default function LoadingScreen({
       </div>
 
       {/* Minimal Elegant Footer */}
-      <div className="absolute bottom-8 flex flex-col items-center gap-2">
-        <div className="h-[30px] w-[1px] bg-gradient-to-b from-white/0 to-white/10 mb-2" />
-        <div className="text-white/20 text-[10px] font-light tracking-[0.5em] uppercase text-center cursor-default">
+      <div className="absolute bottom-4 md:bottom-8 flex flex-col items-center gap-2">
+        <div className="h-[20px] md:h-[30px] w-[1px] bg-gradient-to-b from-white/0 to-white/10 mb-1 md:mb-2" />
+        <div className="text-white/20 text-[9px] md:text-[10px] font-light tracking-[0.4em] md:tracking-[0.5em] uppercase text-center cursor-default">
           Tree Park &bull; Neighbourhood Estates
         </div>
       </div>
