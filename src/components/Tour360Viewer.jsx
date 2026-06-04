@@ -107,6 +107,25 @@ export default function Tour360Viewer() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+  // Completely disable multi-asset preloading on mobile to save RAM
+  if (typeof window !== "undefined" && window.innerWidth < 1024) return;
+
+  if (isPreloadedRef.current) return;
+  isPreloadedRef.current = true;
+
+  let index = 0;
+  const loadNext = () => {
+    if (index >= panoramas.length) return;
+    if (imageCache.current[index]) { index++; loadNext(); return; }
+    const img = new Image();
+    img.src = panoramas[index];
+    img.onload = () => { index++; loadNext(); };
+    img.onerror = () => { index++; loadNext(); };
+  };
+  setTimeout(loadNext, 1000);
+}, []);
+
   const prev = () => setCurrentPano((p) => Math.max(p - 1, 0));
   const next = () => setCurrentPano((p) => Math.min(p + 1, panoramas.length - 1));
 

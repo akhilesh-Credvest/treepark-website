@@ -73,6 +73,44 @@ export default function HeroSection() {
         }, 600);
       }
     };
+const isMobile =
+  typeof window !== "undefined" &&
+  window.innerWidth < 768;
+
+if (isMobile) {
+
+  let loaded = 0;
+
+  for (let i = 22; i <= 30; i++) {
+
+    const img = new Image();
+
+    img.src =
+      `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`;
+
+    img.onload = () => {
+
+      loaded++;
+
+      setProgress((loaded / 9) * 100);
+
+      if (loaded === 9) {
+
+        setTimeout(() => {
+
+          setIsLoading(false);
+
+        }, 200);
+
+      }
+
+    };
+
+  }
+
+  return;
+
+}
 
     const warmupTexture = (img) => {
       if (img.decode) {
@@ -103,21 +141,38 @@ export default function HeroSection() {
     }
 
     // ── 2. PRELOAD DAY-NIGHT MATRIX VIEWS ──
-    dayNightLocations.forEach((loc) => {
-      for (let f = 1; f <= totalDayNightFrames; f++) {
-        const img = new Image();
-        const frameNumber = f + loc.offset;
-        img.src = `/daynight/${loc.key}/HighresScreenshot00${String(frameNumber).padStart(3, "0")}_result.webp`;
-        img.onload = () => {
-          dayNightCache[`${loc.key}_${f}`] = img;
-          warmupTexture(img);
-        };
-        img.onerror = trackLoaderProgress;
-      }
-    });
+if (!isMobile) {
 
+  dayNightLocations.forEach((loc) => {
+
+    for (let f = 1; f <= totalDayNightFrames; f++) {
+
+      const img = new Image();
+
+      const frameNumber = f + loc.offset;
+
+      img.src =
+        `/daynight/${loc.key}/HighresScreenshot00${String(frameNumber).padStart(3, "0")}_result.webp`;
+
+      img.onload = () => {
+
+        dayNightCache[`${loc.key}_${f}`] = img;
+
+        warmupTexture(img);
+
+      };
+
+      img.onerror = trackLoaderProgress;
+
+    }
+
+  });
+
+}
     // ── 3. PRELOAD AMENITIES PANORAMAS ──
-    amenityFiles.forEach((fileSrc, index) => {
+if (!isMobile) {
+
+  amenityFiles.forEach((fileSrc, index) => {
       const img = new Image();
       img.src = fileSrc;
       img.onload = () => {
@@ -129,9 +184,12 @@ export default function HeroSection() {
         trackLoaderProgress();
       };
     });
+  }  
 
     // ── 4. PRELOAD YOUR 3 SPECIFIC STANDALONE TARGET IMAGES ──
-    standaloneHighResFiles.forEach((target) => {
+if (!isMobile) {
+
+  standaloneHighResFiles.forEach((target) => {
       const img = new Image();
       img.src = target.path;
       img.onload = () => {
@@ -147,20 +205,31 @@ export default function HeroSection() {
         trackLoaderProgress();
       };
     });
+  }
 
     // ── 5. PRELOAD HIGH-PERFORMANCE VIDEO BLOB STREAM ──
-    fetch("/videos/highlights.mp4")
-      .then((res) => res.blob())
-      .then((blob) => {
-        globalAppCache.highlights.videoBlobUrl = URL.createObjectURL(blob);
-        globalAppCache.highlights.isReady = true;
-        trackLoaderProgress();
-      })
-      .catch((err) => {
-        console.error("Binary media buffer streaming allocation failed:", err);
-        trackLoaderProgress();
-      });
+if (!isMobile) {
 
+  fetch("/videos/highlights.mp4")
+    .then((res) => res.blob())
+    .then((blob) => {
+
+      globalAppCache.highlights.videoBlobUrl =
+        URL.createObjectURL(blob);
+
+      globalAppCache.highlights.isReady = true;
+
+      trackLoaderProgress();
+
+    })
+    .catch(() => {
+
+      trackLoaderProgress();
+
+    });
+
+}
+      
   }, []);
 
   const handleMenuChange = (newMenu) => {
