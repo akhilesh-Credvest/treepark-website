@@ -60,11 +60,37 @@ export default function ImageSequenceViewer() {
       canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
       canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
 
-      const targetIndex = currentFrame - 1;
-      const cachedImg = sequenceCache[targetIndex];
-      if (ctx && cachedImg) {
-        drawImageToCanvas(ctx, canvas, cachedImg);
-      }
+const targetIndex = currentFrame - 1;
+const cachedImg = sequenceCache[targetIndex];
+
+if (ctx && cachedImg) {
+
+  drawImageToCanvas(
+    ctx,
+    canvas,
+    cachedImg
+  );
+
+} else if (ctx) {
+
+  const img = new Image();
+
+  img.src =
+    `/sequence/HighresScreenshot${String(targetIndex + 22).padStart(5, "0")}_result.webp`;
+
+  img.onload = () => {
+
+    sequenceCache[targetIndex] = img;
+
+    drawImageToCanvas(
+      ctx,
+      canvas,
+      img
+    );
+
+  };
+
+}
     };
 
     window.addEventListener("resize", handleResize);
@@ -79,12 +105,37 @@ export default function ImageSequenceViewer() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const targetIndex = currentFrame - 1;
-    const cachedImg = sequenceCache[targetIndex];
+const targetIndex = currentFrame - 1;
+const cachedImg = sequenceCache[targetIndex];
 
-    if (cachedImg) {
-      drawImageToCanvas(ctx, canvas, cachedImg);
-    }
+if (cachedImg) {
+
+  drawImageToCanvas(
+    ctx,
+    canvas,
+    cachedImg
+  );
+
+} else {
+
+  const img = new Image();
+
+  img.src =
+    `/sequence/HighresScreenshot${String(targetIndex + 22).padStart(5, "0")}_result.webp`;
+
+  img.onload = () => {
+
+    sequenceCache[targetIndex] = img;
+
+    drawImageToCanvas(
+      ctx,
+      canvas,
+      img
+    );
+
+  };
+
+}
   }, [currentFrame]);
 
   return (

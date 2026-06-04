@@ -90,6 +90,8 @@ if (isMobile) {
 
     img.onload = () => {
 
+      sequenceCache[i - 22] = img;
+
       loaded++;
 
       setProgress((loaded / 9) * 100);
