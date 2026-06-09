@@ -154,7 +154,7 @@ export default function AmenitiesViewer() {
   }, [selectedIndex]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
+    <div className="relative w-screen h-[100dvh] overflow-hidden bg-black select-none">
 
       {/* ── MASTERPLAN VIEW ── */}
       {selectedIndex === null && (

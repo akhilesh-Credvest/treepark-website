@@ -130,7 +130,7 @@ export default function Tour360Viewer() {
   const next = () => setCurrentPano((p) => Math.min(p + 1, panoramas.length - 1));
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
+    <div className="relative w-screen h-[100dvh] overflow-hidden bg-black select-none">
 
       {/* Primary WebGL Core Anchor Target Frame */}
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />

@@ -251,7 +251,7 @@ if (!isMobile) {
   }
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-[#0b1719] select-none">
+    <main className="relative w-screen h-[100dvh] overflow-hidden bg-[#0b1719] select-none">
       <Logo />
 
       {activeMenu === "Home" && (

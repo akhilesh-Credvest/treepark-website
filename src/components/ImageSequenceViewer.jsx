@@ -139,7 +139,7 @@ if (cachedImg) {
   }, [currentFrame]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0b1719] select-none">
+    <div className="rrelative w-screen h-[100dvh] overflow-hidden bg-[#0b1719] select-none">
       
       {/* Mobile Orientation Warning Safeguard Overlay */}
       {isPortrait && (

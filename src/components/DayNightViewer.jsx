@@ -111,7 +111,7 @@ export default function DayNightViewer() {
   }, [currentLocation, currentFrame]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0b1719] select-none">
+    <div className="relative w-screen h-[100dvh] overflow-hidden bg-[#0b1719] select-none">
 
       {isPortrait && (
         <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-[#0b1719]/95 backdrop-blur-xl text-center">
