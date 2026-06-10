@@ -69,7 +69,7 @@ export default function HeroSection() {
     const processStage1Progress = () => {
       loaded++;
       const currentPercent = (loaded / targetFrames) * 100;
-      setProgress(Math.floor(currentPercent));
+      setProgress(Math.floor(Math.min(currentPercent, 100)));
 
       if (loaded >= targetFrames) {
         setProgress(100);
@@ -91,7 +91,6 @@ export default function HeroSection() {
             processStage1Progress();
           })
           .catch((err) => {
-            // Safely catch runtime EncodingError without crashing the component tree
             console.error("Stage 1 Texture decoding bypassed safely:", err);
             processStage1Progress();
           });
@@ -108,13 +107,17 @@ export default function HeroSection() {
     // Sequential loop covering the primary user interface visuals
     for (let i = 22; i <= frameLimit; i++) {
       const img = new Image();
-      img.src = `/sequence/HighresScreenshot${String(i + 22).padStart(5, "0")}_result.webp`;
+      
+      // FIXED: Corrected string concatenation template to build the full valid asset path link
+      img.src = `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`;
+      
       img.onload = () => {
         sequenceCache[i - 22] = img;
         runWarmup(img);
       };
       img.onerror = () => {
         console.error(`Failed to download layout sequence item: Frame ${i}`);
+        // IMPORTANT: Still increment loader progress count so loading bar hits 100% and doesn't freeze
         processStage1Progress();
       };
     }
@@ -154,7 +157,6 @@ export default function HeroSection() {
             }
           })
           .catch((err) => {
-            // Safely swallow deferred background image decoding errors to avoid console noise
             console.error("Background Texture decoding bypassed safely:", err);
           })
           .finally(() => {
@@ -175,13 +177,16 @@ export default function HeroSection() {
       for (let f = 1; f <= totalDayNightFrames; f++) {
         const img = new Image();
         const frameNumber = f + loc.offset;
-        img.src = `/daynight/${loc.key}/HighresScreenshot00${String(frameNumber).padStart(3, "0")}_result.webp`;
+        
+        // FIXED: Using standard padStart(5, "0") to accurately target frame numbers
+        img.src = `/daynight/${loc.key}/HighresScreenshot${String(frameNumber).padStart(5, "0")}_result.webp`;
+        
         img.onload = () => {
           dayNightCache[`${loc.key}_${f}`] = img;
           warmupBgTexture(img);
         };
         img.onerror = () => {
-          console.error(`Failed loading daynight resource: ${loc.key} Frame ${f}`);
+          console.error(`Failed loading daynight resource: ${loc.key} Frame ${frameNumber}`);
           updateBgProgress();
         };
       }
