@@ -11,8 +11,8 @@ import HighlightsViewer from "./HighlightsViewer";
 import Logo from "./Logo";
 import LoadingScreen from "./LoadingScreen";
 import BackgroundLoaderStatus from "./BackgroundLoaderStatus";
+import PwaInstallPrompt from "./PwaInstallPrompt"; // Import new mobile full-screen installer popup
 
-// Import your memory warehouse layer
 import { sequenceCache, dayNightCache, AmenitiesCaches, globalAppCache } from "../utils/imageCache";
 
 export default function HeroSection() {
@@ -22,14 +22,16 @@ export default function HeroSection() {
   const [showWebsite, setShowWebsite] = useState(false);
   const [, startTransition] = useTransition();
 
-  // Background Thread State Tracking
+  // Background Cache Progress Trackers
   const [bgTotal, setBgTotal] = useState(0);
   const [bgCurrent, setBgCurrent] = useState(0);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const totalSeqFrames = 72;
+  const mobileInitialFrames = 9; // Core critical package loop for instant mobile loading
   const totalDayNightFrames = 36;
+  
   const dayNightLocations = [
     { key: "maingate", offset: 94 },
     { key: "clubhouse", offset: 168 },
@@ -52,13 +54,12 @@ export default function HeroSection() {
     { path: "/masterplan/HighresScreenshot00060_result.webp", type: "masterplan" }
   ];
 
-  // ── STAGE 1: CRITICAL MAIN LOOP FOR INITIAL EXPERIENCE LOADING SCREEN ──
+  // ── STAGE 1: UNIFIED CRITICAL CORE LOADER PIPELINE ──
   useEffect(() => {
     let loaded = 0;
-    const targetFrames = isMobile ? 9 : totalSeqFrames;
-    const frameLimit = isMobile ? 30 : 22 + totalSeqFrames - 1;
+    // On mobile we only wait for 9 frames to allow instant explore entry; on desktop we load all 72 frames
+    const targetFrames = isMobile ? mobileInitialFrames : totalSeqFrames;
 
-    // Offscreen canvas to warm up core textures directly onto the GPU
     const offscreenCanvas = typeof document !== "undefined" ? document.createElement("canvas") : null;
     if (offscreenCanvas) {
       offscreenCanvas.width = 16;
@@ -83,53 +84,40 @@ export default function HeroSection() {
       if (img && img.decode) {
         img.decode()
           .then(() => {
-            try {
-              if (ctx) ctx.drawImage(img, 0, 0, 4, 4);
-            } catch (e) {
-              console.warn("Canvas draw omitted during warmup:", e);
-            }
+            try { if (ctx) ctx.drawImage(img, 0, 0, 4, 4); } catch (e) {}
             processStage1Progress();
           })
-          .catch((err) => {
-            console.error("Stage 1 Texture decoding bypassed safely:", err);
+          .catch(() => {
             processStage1Progress();
           });
       } else {
-        try {
-          if (ctx && img) ctx.drawImage(img, 0, 0, 4, 4);
-        } catch (e) {
-          console.warn("Canvas draw omitted during warmup:", e);
-        }
+        try { if (ctx && img) ctx.drawImage(img, 0, 0, 4, 4); } catch (e) {}
         processStage1Progress();
       }
     };
 
-    // Sequential loop covering the primary user interface visuals
+    // Load initial critical frames (22 to 30 on mobile, or 22 to 93 on desktop)
+    const frameLimit = 22 + targetFrames - 1;
     for (let i = 22; i <= frameLimit; i++) {
       const img = new Image();
-      
-      // FIXED: Corrected string concatenation template to build the full valid asset path link
       img.src = `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`;
-      
       img.onload = () => {
         sequenceCache[i - 22] = img;
         runWarmup(img);
       };
-      img.onerror = () => {
-        console.error(`Failed to download layout sequence item: Frame ${i}`);
-        // IMPORTANT: Still increment loader progress count so loading bar hits 100% and doesn't freeze
-        processStage1Progress();
-      };
+      img.onerror = processStage1Progress;
     }
   }, [isMobile]);
 
-  // ── STAGE 2: NON-BLOCKING BACKGROUND DEFERRED ASSETS PIPELINE ──
+  // ── STAGE 2: BACKGROUND LOADER PIPELINE (RUNS ON DESKTOP AND MOBILE AFTER CLICKING ENTER) ──
   useEffect(() => {
-    // Only kick off background caching operations once the user clicks "ENTER EXPERIENCE"
-    if (!showWebsite || isMobile) return;
+    if (!showWebsite) return;
 
+    // Mobile needs to fetch the remaining 63 sequence images in the background
+    const remainingMobileSequenceCount = isMobile ? (totalSeqFrames - mobileInitialFrames) : 0;
     const totalDayNightAssets = dayNightLocations.length * totalDayNightFrames;
-    const grandTotalBg = totalDayNightAssets + amenityFiles.length + standaloneHighResFiles.length + 1;
+    const grandTotalBg = remainingMobileSequenceCount + totalDayNightAssets + amenityFiles.length + standaloneHighResFiles.length + 1;
+    
     setBgTotal(grandTotalBg);
 
     let bgProcessed = 0;
@@ -138,61 +126,52 @@ export default function HeroSection() {
       setBgCurrent(bgProcessed);
     };
 
-    // Offscreen canvas pipeline for deferred images
     const bgCanvas = typeof document !== "undefined" ? document.createElement("canvas") : null;
-    if (bgCanvas) {
-      bgCanvas.width = 16;
-      bgCanvas.height = 16;
-    }
     const bgCtx = bgCanvas ? bgCanvas.getContext("2d") : null;
 
     const warmupBgTexture = (img) => {
       if (img && img.decode) {
         img.decode()
-          .then(() => {
-            try {
-              if (bgCtx) bgCtx.drawImage(img, 0, 0, 4, 4);
-            } catch (e) {
-              console.warn("Canvas draw omitted during bg warmup:", e);
-            }
-          })
-          .catch((err) => {
-            console.error("Background Texture decoding bypassed safely:", err);
-          })
-          .finally(() => {
-            updateBgProgress();
-          });
+          .then(() => { try { if (bgCtx) bgCtx.drawImage(img, 0, 0, 4, 4); } catch (e) {} })
+          .catch(() => {})
+          .finally(() => { updateBgProgress(); });
       } else {
-        try {
-          if (bgCtx && img) bgCtx.drawImage(img, 0, 0, 4, 4);
-        } catch (e) {
-          console.warn("Canvas draw omitted during bg warmup:", e);
-        }
+        try { if (bgCtx && img) bgCtx.drawImage(img, 0, 0, 4, 4); } catch (e) {}
         updateBgProgress();
       }
     };
 
-    // Sub-Task A: Day-Night Texture Processing Matrices
+    // Sub-Task A: If Mobile, load the rest of the Home screen sequence frames in the background
+    if (isMobile) {
+      const remainingStartFrame = 22 + mobileInitialFrames;
+      const remainingEndFrame = 22 + totalSeqFrames - 1;
+
+      for (let i = remainingStartFrame; i <= remainingEndFrame; i++) {
+        const img = new Image();
+        img.src = `/sequence/HighresScreenshot${String(i).padStart(5, "0")}_result.webp`;
+        img.onload = () => {
+          sequenceCache[i - 22] = img;
+          warmupBgTexture(img);
+        };
+        img.onerror = updateBgProgress;
+      }
+    }
+
+    // Sub-Task B: Day-Night Sequences
     dayNightLocations.forEach((loc) => {
       for (let f = 1; f <= totalDayNightFrames; f++) {
         const img = new Image();
         const frameNumber = f + loc.offset;
-        
-        // FIXED: Using standard padStart(5, "0") to accurately target frame numbers
         img.src = `/daynight/${loc.key}/HighresScreenshot${String(frameNumber).padStart(5, "0")}_result.webp`;
-        
         img.onload = () => {
           dayNightCache[`${loc.key}_${f}`] = img;
           warmupBgTexture(img);
         };
-        img.onerror = () => {
-          console.error(`Failed loading daynight resource: ${loc.key} Frame ${frameNumber}`);
-          updateBgProgress();
-        };
+        img.onerror = updateBgProgress;
       }
     });
 
-    // Sub-Task B: Amenities Panorama Assets Caching Ring
+    // Sub-Task C: Amenities Panorama Assets
     amenityFiles.forEach((fileSrc, index) => {
       const img = new Image();
       img.src = fileSrc;
@@ -200,13 +179,10 @@ export default function HeroSection() {
         AmenitiesCaches[index] = img;
         warmupBgTexture(img);
       };
-      img.onerror = () => {
-        console.error(`Failed loading amenity layout resource: ${fileSrc}`);
-        updateBgProgress();
-      };
+      img.onerror = updateBgProgress;
     });
 
-    // Sub-Task C: High-Resolution Application Architecture Maps
+    // Sub-Task D: High-Resolution Application Maps
     standaloneHighResFiles.forEach((target) => {
       const img = new Image();
       img.src = target.path;
@@ -216,22 +192,17 @@ export default function HeroSection() {
         if (target.type === "masterplan") globalAppCache.masterplan.baseMap = img;
         warmupBgTexture(img);
       };
-      img.onerror = () => {
-        console.error(`Failed to cache structural standalone element at: ${target.path}`);
-        updateBgProgress();
-      };
+      img.onerror = updateBgProgress;
     });
 
-    // Sub-Task D: High-Performance Video Stream Storage Caching
+    // Sub-Task E: Highlights Video pre-warming loop
     fetch("/videos/highlights.mp4")
       .then((res) => res.blob())
       .then((blob) => {
         globalAppCache.highlights.videoBlobUrl = URL.createObjectURL(blob);
         globalAppCache.highlights.isReady = true;
       })
-      .catch((err) => {
-        console.error("Failed to preload target stream highlights video:", err);
-      })
+      .catch(() => {})
       .finally(() => {
         updateBgProgress();
       });
@@ -294,8 +265,11 @@ export default function HeroSection() {
         </div>
       )}
 
-      {/* Persistent Overlay Monitoring the Background Loading Pipeline Status Thread */}
+      {/* Floating Status Bar Component monitoring the background download loop */}
       <BackgroundLoaderStatus total={bgTotal} current={bgCurrent} />
+
+      {/* Modern custom Mobile Add To Home Screen Popup indicator */}
+      <PwaInstallPrompt />
 
       <SideMenu activeMenu={activeMenu} setActiveMenu={handleMenuChange} />
     </main>

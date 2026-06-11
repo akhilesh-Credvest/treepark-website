@@ -12,8 +12,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Tree Park - Neighbourhood Estates",
-  description: "Premium plotted development project",
+  title: "Tree Park Archviz",
+  description: "Interactive Architecture Experience",
+  // Tells mobile devices to hide the Safari/Chrome address bars when launched from home screen:
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Tree Park",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport = {
