@@ -54,6 +54,20 @@ export default function HeroSection() {
     { path: "/masterplan/HighresScreenshot00060_result.webp", type: "masterplan" }
   ];
 
+    useEffect(() => {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').then(
+        function(registration) {
+          console.log('Service Worker registered successfully with scope: ', registration.scope);
+        },
+        function(err) {
+          console.log('Service Worker registration failed: ', err);
+        }
+      );
+    });
+  }
+}, []);
   // ── STAGE 1: UNIFIED CRITICAL CORE LOADER PIPELINE ──
   useEffect(() => {
     let loaded = 0;
